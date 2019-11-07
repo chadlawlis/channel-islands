@@ -1,4 +1,4 @@
-/* global d3, mapboxgl, MapboxDraw, ss, turf */
+/* global $, d3, mapboxgl, MapboxDraw, ss, turf */
 
 // Search "TODO" for code requring immediate changes
 
@@ -32,11 +32,21 @@ import { Spinner } from './spin.js';
   // Animate spinner on page load
   spinner.spin(target);
 
-  var mapLayers,
-    firstBoundaryLayer,
-    firstLabelLayer,
+  var layersToggle, // Define globally so can be accessed on data load when creating layer switchers
+    layersImage, // Define globally so can be accessed on data load when creating layer switchers
+    layersMenu, // Define globally so can be instantiated on data load when creating layer switchers
+    baseLayersMenu, // Define globally so can be instantiated on data load when creating layer switchers
+    overlayLayersMenu, // Define globally so can be instantiated on data load when creating layer switchers
+    // mapLayers,
+    // firstBoundaryLayer,
+    // firstLabelLayer,
     data,
+    types,
+    bboxFeatures,
     bbox;
+
+  var user = 'clawlis';
+  var sql = 'select cartodb_id, name, type, island, status, note, verified, icon, the_geom from clawlis.chis_poi where type = \'campground\' or type = \'restroom\' or type = \'drinking-water\' or type = \'viewpoint\' order by type, name';
 
   mapboxgl.accessToken = 'pk.eyJ1IjoiY2hhZGxhd2xpcyIsImEiOiJlaERjUmxzIn0.P6X84vnEfttg0TZ7RihW1g';
 
@@ -51,12 +61,7 @@ import { Spinner } from './spin.js';
   var zoomToBounds = [[-120.47, 33.88], [-119.34, 34.09]]; // TODO: update
   var zoomToOptions = {
     linear: true,
-    padding: {
-      top: 60,
-      right: 80,
-      bottom: 80,
-      left: 80
-    }
+    padding: 40
   };
   map.fitBounds(zoomToBounds, zoomToOptions);
 
@@ -68,16 +73,6 @@ import { Spinner } from './spin.js';
   }, {
     label: 'Satellite',
     id: 'satellite-streets-v11'
-  }];
-
-  // TODO: update
-  var overlayLayers = [{
-    id: 'data',
-    label: 'Data',
-    source: {},
-    sourceName: 'data',
-    visibility: 'visible',
-    type: 'fill'
   }];
 
   // Create popup, but don't add it to the map yet
@@ -97,26 +92,6 @@ import { Spinner } from './spin.js';
   // Set minZoom as floor of (rounded down to nearest integer from) fitBounds zoom
     var minZoom = map.getZoom();
     map.setMinZoom(Math.floor(minZoom));
-
-    mapLayers = map.getStyle().layers;
-
-    // TODO: choose between setting firstLabelLayer or firstBoundaryLayer (below), depending on need
-
-    // Find the index of the settlement-label layer in the loaded map style, to place added layers below
-    for (let i = 0; i < mapLayers.length; i++) {
-      if (mapLayers[i].id === 'settlement-label') {
-        firstLabelLayer = mapLayers[i].id;
-        break;
-      }
-    }
-
-    // Find the index of the first admin/boundary layer in the loaded map style, to place counties layers below
-    for (let i = 0; i < mapLayers.length; i++) {
-      if (mapLayers[i]['source-layer'] === 'admin') {
-        firstBoundaryLayer = mapLayers[i].id;
-        break;
-      }
-    }
 
     // Add zoom and rotation controls
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }));
@@ -203,50 +178,113 @@ import { Spinner } from './spin.js';
     });
 
     // Create map style switcher structure
-    var layersToggle = document.getElementById('layers-toggle'); // Create "layers-toggle" parent div
+    layersToggle = document.getElementById('layers-toggle'); // Create "layers-toggle" parent div
     layersToggle.className = 'layers-toggle map-overlay';
 
-    var layersImage = document.createElement('div'); // Create "layers-image" div with Leaflet layers icon; default display
+    layersImage = document.createElement('div'); // Create "layers-image" div with Leaflet layers icon; default display
     layersImage.className = 'layers-image';
     var layersImageAnchor = document.createElement('a');
     layersImage.appendChild(layersImageAnchor);
     layersToggle.appendChild(layersImage);
 
-    var layersMenu = document.createElement('div'); // Create "layers-menu" div; displays on mouseover
+    // Defined globally above so can be instantiated on data load
+    layersMenu = document.createElement('div'); // Create "layers-menu" div; displays on mouseover
     layersMenu.className = 'layers-menu';
 
-    var overlayLayersMenu = document.createElement('div');
+    // Defined globally above so can be instantiated on data load
+    // see addOverlayLayersMenu()
+    overlayLayersMenu = document.createElement('div');
+    overlayLayersMenu.id = 'overlay-layers';
     overlayLayersMenu.className = 'form-menu';
 
-    overlayLayers.forEach(function (l) {
-      var layerDiv = document.createElement('div');
-      layerDiv.className = 'toggle';
-      var layerInput = document.createElement('input');
-      layerInput.type = 'checkbox';
-      layerInput.id = l.id;
-      layerInput.checked = true;
-      var layerLabel = document.createElement('label');
-      layerLabel.textContent = l.label;
-      layerDiv.appendChild(layerInput);
-      layerDiv.appendChild(layerLabel);
-      overlayLayersMenu.appendChild(layerDiv);
+    // Defined globally above so can be instantiated on data load
+    // see addBaseLayersMenu()
+    baseLayersMenu = document.createElement('div');
+    baseLayersMenu.id = 'base-layers';
+    baseLayersMenu.className = 'form-menu';
 
-      layerInput.addEventListener('change', function (e) {
-        map.setLayoutProperty(l.id, 'visibility', e.target.checked ? 'visible' : 'none');
-        l.visibility = map.getLayoutProperty(l.id, 'visibility');
+    loadData();
+  });
 
-        // TODO: maintain only if needed for fill layer with separate line layer
-        if (l.type === 'fill') {
-          map.setLayoutProperty(l.id + '-line', 'visibility', e.target.checked ? 'visible' : 'none');
+  function loadData () {
+    $.ajax('https://' + user + '.carto.com/api/v2/sql?format=GeoJSON&q=' + sql, {
+      beforeSend: function () {
+        spinner.spin(target);
+      },
+      complete: function () {
+        spinner.stop();
+      },
+      dataType: 'json',
+      success: function (response) {
+        data = response;
+
+        console.log(data);
+
+        // Populate overlayLayersMenu if it has not been yet (i.e., on page landing)
+        if (!overlayLayersMenu.hasChildNodes()) {
+          addOverlayLayersMenu();
         }
-      });
+
+        mapData();
+      },
+      error: function () {
+        spinner.stop();
+      },
+      statusCode: {
+        400: function () {
+          window.alert('Error (400): Bad request.');
+        },
+        404: function () {
+          window.alert('Error (404): The requested resource could not be found.');
+        },
+        500: function () {
+          window.alert('Error (500): Internal server error.');
+        }
+      }
     });
+  }
+
+  function addOverlayLayersMenu () {
+    types = [];
+    data.features.forEach(function (f) {
+      let props = f.properties;
+
+      // If feature type hasn't been added to types array yet, add it to layer switcher
+      if (types.indexOf(props.type) === -1) {
+        types.push(props.type);
+        var layerDiv = document.createElement('div');
+        layerDiv.className = 'toggle';
+        var layerInput = document.createElement('input');
+        layerInput.type = 'checkbox';
+        layerInput.id = props.type;
+        layerInput.checked = true;
+        var layerLabel = document.createElement('label');
+
+        if (props.type === 'drinking-water') {
+          layerLabel.textContent = 'Drinking Water';
+        } else {
+          // Create layer label from type: "restroom" -> "Restrooms"
+          layerLabel.textContent = props.type.charAt(0).toUpperCase() + props.type.slice(1) + 's';
+        }
+
+        layerDiv.appendChild(layerInput);
+        layerDiv.appendChild(layerLabel);
+        overlayLayersMenu.appendChild(layerDiv);
+
+        layerInput.addEventListener('change', function (e) {
+          map.setLayoutProperty(props.type, 'visibility', e.target.checked ? 'visible' : 'none');
+        });
+      }
+    });
+
+    console.log('types on addOverlayLayersMenu:', types);
 
     layersMenu.appendChild(overlayLayersMenu);
 
-    var baseLayersMenu = document.createElement('div');
-    baseLayersMenu.className = 'form-menu';
+    addBaseLayersMenu();
+  }
 
+  function addBaseLayersMenu () {
     baseLayers.forEach(function (l) { // Instantiate layersMenu with an input for each baseLayer declared at top of script
       var layerDiv = document.createElement('div'); // Store each input in a div for vertical list display
       layerDiv.id = l.label.toLowerCase() + '-input';
@@ -294,8 +332,147 @@ import { Spinner } from './spin.js';
       layersImage.style.display = 'block'; // Return to default display of layers icon on mouseout ...
       layersMenu.style.display = 'none'; // ... hiding layer switcher menu
     });
+  }
 
-    // Stop spinner once all page load functions have been called
-    spinner.stop();
-  });
+  function mapData () {
+    // mapLayers = map.getStyle().layers;
+    //
+    // // Find the index of the settlement-label layer in the loaded map style, to place counties layer below
+    // for (let i = 0; i < mapLayers.length; i++) {
+    //   if (mapLayers[i].id === 'settlement-label') {
+    //     firstLabelLayer = mapLayers[i].id;
+    //     break;
+    //   }
+    // }
+
+    console.log('data on mapData():', data);
+
+    // data.features.forEach(function (f) {
+    //   let props = f.properties;
+    //
+    //   if (map.getLayer(props.type)) {
+    //     map.removeLayer(props.type);
+    //   }
+    // });
+
+    types.forEach(function (t) {
+      if (map.getLayer(t)) {
+        map.removeLayer(t);
+      }
+    });
+
+    if (map.getSource('data')) {
+      map.removeSource('data');
+    }
+
+    // Reverse types order so that features render in same order as overlay layer switcher order
+    // campground, drinking-water, restroom, viewpoint
+    types = types.reverse();
+
+    types.forEach(function (t) {
+      if (!map.getSource('data')) {
+        map.addSource('data', {
+          type: 'geojson',
+          data: data
+        });
+      }
+      if (!map.getLayer(t)) {
+        map.addLayer({
+          id: t,
+          type: 'symbol',
+          source: 'data',
+          layout: {
+            'icon-image': '{icon}',
+            'icon-allow-overlap': true,
+            'text-field': '{name}',
+            // 'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+            'text-size': 10,
+            // 'text-transform': 'uppercase',
+            'text-letter-spacing': 0.05
+            // 'text-offset': [0, 1.5]
+          },
+          paint: {
+            'text-color': '#333',
+            'text-halo-color': '#fff',
+            'text-halo-width': 2
+          },
+          'filter': ['==', 'type', t]
+        }); // }, firstLabelLayer/firstBoundaryLayer);
+      }
+    });
+
+    // data.features.forEach(function (f) {
+    //   let props = f.properties;
+    //
+    //   if (!map.getSource('data')) {
+    //     map.addSource('data', {
+    //       type: 'geojson',
+    //       data: data
+    //     });
+    //   }
+    //
+    //   if (!map.getLayer(props.type)) {
+    //     map.addLayer({
+    //       id: props.type,
+    //       type: 'symbol',
+    //       source: 'data',
+    //       layout: {
+    //         'icon-image': props.icon,
+    //         'icon-allow-overlap': true,
+    //         'text-field': '{name}',
+    //         // 'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+    //         'text-size': 12,
+    //         // 'text-transform': 'uppercase',
+    //         'text-letter-spacing': 0.05
+    //         // 'text-offset': [0, 1.5]
+    //       },
+    //       paint: {
+    //         'text-color': '#333',
+    //         'text-halo-color': '#fff',
+    //         'text-halo-width': 2
+    //       },
+    //       'filter': ['==', 'type', props.type]
+    //     }); // }, firstLabelLayer/firstBoundaryLayer);
+    //   }
+    //
+    //   // // Add popup for each layer
+    //   // // Change cursor to pointer on parcel layer mouseover
+    //   // map.on('mousemove', 'counties', function (e) {
+    //   //   map.getCanvas().style.cursor = 'pointer';
+    //   //
+    //   //   var popupContent;
+    //   //   var props = e.features[0].properties;
+    //   //
+    //   //   popupContent = '<div><div class="popup-menu"><p><b>' + props.name + '</b></p>' +
+    //   //   '<p style="margin-top: 2px">' + props.state_name + '</p></div>' +
+    //   //   '<hr>' +
+    //   //   '<div class="popup-menu"><p><b>Hard Freeze Date</b></p>' +
+    //   //   '<p class="small" style="margin-top: 2px">' + fLayer.substring(0, 1) + ' of past 10 years</p><p>';
+    //   //
+    //   //   if (props[fDate] !== 'null') {
+    //   //     popupContent += props[fDate] + '</p>';
+    //   //   } else {
+    //   //     popupContent += 'N/A</p>';
+    //   //   }
+    //   //
+    //   //   popupContent += '<p><b>Latest Silking Date</b></p><p>';
+    //   //
+    //   //   if (props[sDate] !== 'null') {
+    //   //     popupContent += props[sDate] + '</p></div></div>';
+    //   //   } else {
+    //   //     popupContent += 'N/A</p></div></div>';
+    //   //   }
+    //   //
+    //   //   popup.setLngLat(e.lngLat)
+    //   //     .setHTML(popupContent)
+    //   //     .addTo(map);
+    //   // });
+    //   //
+    //   // // Change cursor back to default ("grab") on parcel layer mouseleave
+    //   // map.on('mouseleave', 'counties', function () {
+    //   //   map.getCanvas().style.cursor = '';
+    //   //   popup.remove();
+    //   // });
+    // });
+  }
 })();
