@@ -48,8 +48,7 @@ import { Spinner } from './spin.js';
   });
 
   // [[sw],[ne]]
-  // var usBounds = [[-131.50, 22.10], [-62.50, 52.66]];
-  var zoomToBounds = [[-131.50, 22.10], [-62.50, 52.66]]; // TODO: update
+  var zoomToBounds = [[-120.47, 33.88], [-119.34, 34.09]]; // TODO: update
   var zoomToOptions = {
     linear: true,
     padding: {
