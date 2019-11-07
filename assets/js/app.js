@@ -1,4 +1,4 @@
-/* global d3, mapboxgl, ss, turf */
+/* global d3, mapboxgl, MapboxDraw, ss, turf */
 
 // Search "TODO" for code requring immediate changes
 
@@ -43,7 +43,7 @@ import { Spinner } from './spin.js';
   var map = new mapboxgl.Map({
     container: 'map',
     hash: true,
-    style: 'mapbox://styles/mapbox/light-v10',
+    style: 'mapbox://styles/mapbox/outdoors-v10',
     customAttribution: '<a href="https://chadlawlis.com">Chad Lawlis</a>'
   });
 
@@ -64,11 +64,8 @@ import { Spinner } from './spin.js';
   // Declare baseLayers for map style switcher
   // See baseLayers.forEach() in map.onLoad() for menu creation
   var baseLayers = [{
-    label: 'Light',
-    id: 'light-v10'
-  }, {
-    label: 'Dark',
-    id: 'dark-v10'
+    label: 'Outdoors',
+    id: 'outdoors-v11'
   }, {
     label: 'Satellite',
     id: 'satellite-streets-v11'
@@ -124,6 +121,24 @@ import { Spinner } from './spin.js';
 
     // Add zoom and rotation controls
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }));
+
+    // Add geolocate control
+    // https://docs.mapbox.com/mapbox-gl-js/api/#geolocatecontrol
+    map.addControl(new mapboxgl.GeolocateControl({
+      positionOptions: {
+        enableHighAccuracy: true
+      },
+      trackUserLocation: true
+    }));
+
+    var draw = new MapboxDraw({
+      displayControlsDefault: false,
+      controls: {
+        point: true,
+        trash: true
+      }
+    });
+    map.addControl(draw);
 
     // Create custom "zoom to" control and implement as ES6 class
     // https://docs.mapbox.com/mapbox-gl-js/api/#icontrol
@@ -242,7 +257,7 @@ import { Spinner } from './spin.js';
       layerInput.type = 'radio';
       layerInput.name = 'base-layer';
       layerInput.value = l.label.toLowerCase();
-      if (l.label === 'Light') { // Set Light style to checked by default (given loaded on landing); TODO: update as needed
+      if (l.label === 'Outdoors') { // Set Light style to checked by default (given loaded on landing); TODO: update as needed
         layerInput.checked = true;
       }
       layerDiv.appendChild(layerInput);
