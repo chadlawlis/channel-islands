@@ -37,9 +37,8 @@ import { Spinner } from './spin.js';
     layersMenu, // Define globally so can be instantiated on data load when creating layer switchers
     baseLayersMenu, // Define globally so can be instantiated on data load when creating layer switchers
     overlayLayersMenu, // Define globally so can be instantiated on data load when creating layer switchers
-    // mapLayers,
-    // firstBoundaryLayer,
-    // firstLabelLayer,
+    mapLayers,
+    firstLabelLayer,
     data,
     types,
     bboxFeatures,
@@ -94,6 +93,16 @@ import { Spinner } from './spin.js';
 
   // Trigger mapData() on map style load (ensures data persists when map style changed)
   map.on('style.load', function () {
+    mapLayers = map.getStyle().layers;
+
+    // Find the index of the settlement-label layer in the loaded map style, to place counties layer below
+    for (let i = 0; i < mapLayers.length; i++) {
+      if (mapLayers[i].id === 'settlement-label') {
+        firstLabelLayer = mapLayers[i].id;
+        break;
+      }
+    }
+
     if (data) {
       mapData(data);
     }
@@ -366,16 +375,6 @@ import { Spinner } from './spin.js';
   }
 
   function mapData () {
-    // mapLayers = map.getStyle().layers;
-    //
-    // // Find the index of the settlement-label layer in the loaded map style, to place counties layer below
-    // for (let i = 0; i < mapLayers.length; i++) {
-    //   if (mapLayers[i].id === 'settlement-label') {
-    //     firstLabelLayer = mapLayers[i].id;
-    //     break;
-    //   }
-    // }
-
     console.log('data on mapData():', data);
 
     // data.features.forEach(function (f) {
@@ -429,7 +428,7 @@ import { Spinner } from './spin.js';
             'text-halo-width': 2
           },
           'filter': ['==', 'type', t]
-        }); // }, firstLabelLayer/firstBoundaryLayer);
+        }); // }, firstLabelLayer);
       }
     });
 
@@ -464,7 +463,7 @@ import { Spinner } from './spin.js';
     //         'text-halo-width': 2
     //       },
     //       'filter': ['==', 'type', props.type]
-    //     }); // }, firstLabelLayer/firstBoundaryLayer);
+    //     }); // }, firstLabelLayer);
     //   }
     //
     //   // // Add popup for each layer
