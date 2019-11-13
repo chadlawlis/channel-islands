@@ -54,7 +54,7 @@ import { Spinner } from './spin.js';
     container: 'map',
     hash: true,
     style: 'mapbox://styles/mapbox/outdoors-v10',
-    customAttribution: '<a href="https://chadlawlis.com">Chad Lawlis</a>'
+    customAttribution: '<a href="https://chadlawlis.com">&#169; Chad Lawlis</a>'
   });
 
   // [[sw],[ne]]
@@ -81,6 +81,17 @@ import { Spinner } from './spin.js';
     closeOnClick: false
   });
 
+  // Create draw control, but don't add it to the map yet
+  // (must be added on map load)
+  var draw = new MapboxDraw({
+    displayControlsDefault: false,
+    controls: {
+      point: true,
+      trash: true
+    },
+    userProperties: true
+  });
+
   // Trigger mapData() on map style load (ensures data persists when map style changed)
   map.on('style.load', function () {
     if (data) {
@@ -105,13 +116,7 @@ import { Spinner } from './spin.js';
       trackUserLocation: true
     }));
 
-    var draw = new MapboxDraw({
-      displayControlsDefault: false,
-      controls: {
-        point: true,
-        trash: true
-      }
-    });
+    // Add draw control to the map
     map.addControl(draw);
 
     // Create custom "zoom to" control and implement as ES6 class
@@ -204,6 +209,29 @@ import { Spinner } from './spin.js';
     baseLayersMenu.className = 'form-menu';
 
     loadData();
+  });
+
+  map.on('draw.create', function () {
+    // console.log(map.getStyle().layers);
+
+    var data = draw.getAll();
+    var item = data.features.length - 1;
+    var feature = data.features[item];
+    console.log(feature);
+
+    draw.setFeatureProperty(feature.id, 'type', 'restroom');
+
+    // console.log('mapbox-gl-draw-hot:', map.getSource('mapbox-gl-draw-hot'));
+    // console.log('mapbox-gl-draw-cold:', map.getSource('mapbox-gl-draw-cold'));
+  });
+
+  map.on('click', function (e) {
+    if (draw.getFeatureIdsAt(e.point).length > 0) {
+      // console.log(draw.getFeatureIdsAt(e.point));
+
+      var featureId = draw.getFeatureIdsAt(e.point)[0];
+      console.log(draw.get(featureId));
+    }
   });
 
   function loadData () {
@@ -365,8 +393,9 @@ import { Spinner } from './spin.js';
       map.removeSource('data');
     }
 
-    // Reverse types order so that features render in same order as overlay layer switcher order
+    // Reverse types order so that features render in same order as overlay layer switcher order:
     // campground, drinking-water, restroom, viewpoint
+    // (otherwise, they render in reverse of original order: viewpoint, restroom, drinking-water, campground)
     types = types.reverse();
 
     types.forEach(function (t) {
