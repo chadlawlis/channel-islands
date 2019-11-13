@@ -343,8 +343,11 @@ import { Spinner } from './spin.js';
 
     function switchBaseLayer (layer) {
       var layerId = layer.target.id;
-      map.setStyle('mapbox://styles/mapbox/' + layerId); // TODO: update if using styles other than mapbox
-      // setStyle also triggers map.on('style.load') above, which includes a renewed call to mapData()
+      // Only set style if different than current style
+      if (map.getStyle().metadata['mapbox:origin'] !== layerId) {
+        map.setStyle('mapbox://styles/mapbox/' + layerId);
+        // setStyle also triggers map.on('style.load') above, which includes a renewed call to mapData()
+      }
     }
 
     for (let i = 0; i < baseLayerInputs.length; i++) {
