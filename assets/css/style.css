@@ -5,7 +5,7 @@ html, body, #map {
 
 body {
   color: #333;
-  font: 14px -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, Helvetica, sans-serif;
+  font: 12px -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, Helvetica, sans-serif;
   margin: 0;
   padding: 0;
 }
@@ -28,6 +28,28 @@ body {
   bottom: 0;
   right: 0;
   margin: 0 10px 40px 0;
+}
+
+.form-input,
+.form-label {
+  margin-bottom: 6px;
+}
+
+.form-label {
+  display: block;
+}
+
+.form-input label {
+  font-weight: bold;
+}
+
+.form-input.lat {
+  float: left;
+  margin: 0 8px 0 0;
+}
+
+.form-input.lon {
+  float: right;
 }
 
 .form-menu {
@@ -55,7 +77,14 @@ input[type="radio"] {
 
 input[type="number"] {
   color: #333;
-  font: 14px -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, Helvetica, sans-serif;
+  font: 12px -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, Helvetica, sans-serif;
+  width: 85px;
+}
+
+input[type="text"] {
+  color: #333;
+  font: 12px -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, Helvetica, sans-serif;
+  width: 220px;
 }
 
 input:disabled+label {
@@ -187,7 +216,7 @@ input:valid+span:after {
 .mapboxgl-popup-content {
   background: #333;
   color: #efefef;
-  font: 14px -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, Helvetica, sans-serif;
+  font: 12px -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, Helvetica, sans-serif;
   min-width: 130px;
   padding: 0;
   text-align: center;

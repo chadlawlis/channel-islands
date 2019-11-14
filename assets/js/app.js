@@ -1,6 +1,6 @@
-/* global $, d3, mapboxgl, MapboxDraw, ss, turf */
+/* global $, mapboxgl, MapboxDraw */
 
-// Search "TODO" for code requring immediate changes
+// !!! Search "TODO" to address remaining updates needed !!!
 
 import { Spinner } from './spin.js';
 
@@ -37,12 +37,18 @@ import { Spinner } from './spin.js';
     layersMenu, // Define globally so can be instantiated on data load when creating layer switchers
     baseLayersMenu, // Define globally so can be instantiated on data load when creating layer switchers
     overlayLayersMenu, // Define globally so can be instantiated on data load when creating layer switchers
+    idInput,
+    latInput,
+    lonInput,
+    feature,
     mapLayers,
     firstLabelLayer,
     data,
     types,
     bboxFeatures,
     bbox;
+
+  var newDrawFeature = false;
 
   var user = 'clawlis';
   var sql = 'select cartodb_id, name, type, island, status, note, verified, icon, the_geom from clawlis.chis_poi where type = \'campground\' or type = \'restroom\' or type = \'drinking-water\' or type = \'viewpoint\' order by type, name';
@@ -217,31 +223,152 @@ import { Spinner } from './spin.js';
     baseLayersMenu.id = 'base-layers';
     baseLayersMenu.className = 'form-menu';
 
+    var form = document.getElementById('form');
+    form.className = 'bottom-left map-overlay';
+
+    var formInputs = document.createElement('form');
+    formInputs.className = 'form-menu';
+
+    // Id text input
+    var idInputDiv = document.createElement('div');
+    idInputDiv.className = 'form-input id';
+    var idLabel = document.createElement('label');
+    idLabel.className = 'form-label';
+    idLabel.textContent = 'ID';
+    idInputDiv.appendChild(idLabel);
+    idInput = document.createElement('input');
+    idInput.id = 'id';
+    idInput.type = 'text';
+    idInput.name = 'id';
+    idInput.required = 'true';
+    idInput.disabled = 'true';
+    idInputDiv.appendChild(idInput);
+
+    formInputs.appendChild(idInputDiv);
+
+    // Latitude number input
+    var latInputDiv = document.createElement('div');
+    latInputDiv.className = 'form-input lat';
+    var latLabel = document.createElement('label');
+    latLabel.className = 'form-label';
+    latLabel.textContent = 'Latitude';
+    latInputDiv.appendChild(latLabel);
+    latInput = document.createElement('input');
+    latInput.id = 'lat';
+    latInput.type = 'number';
+    latInput.name = 'lat';
+    latInput.min = '-90';
+    latInput.max = '90';
+    latInput.required = 'true';
+    latInput.disabled = 'true';
+    latInputDiv.appendChild(latInput);
+
+    formInputs.appendChild(latInputDiv);
+
+    // Longitude number input
+    var lonInputDiv = document.createElement('div');
+    lonInputDiv.className = 'form-input lon';
+    var lonLabel = document.createElement('label');
+    lonLabel.className = 'form-label';
+    lonLabel.textContent = 'Longitude';
+    lonInputDiv.appendChild(lonLabel);
+    lonInput = document.createElement('input');
+    lonInput.id = 'lat';
+    lonInput.type = 'number';
+    lonInput.name = 'lat';
+    lonInput.min = '-180';
+    lonInput.max = '180';
+    lonInput.required = 'true';
+    lonInput.disabled = 'true';
+    lonInputDiv.appendChild(lonInput);
+
+    formInputs.appendChild(lonInputDiv);
+
+    form.appendChild(formInputs);
+
     loadData();
   });
 
-  map.on('draw.create', function () {
+  map.on('draw.create', function (e) {
     // console.log(map.getStyle().layers);
 
-    var data = draw.getAll();
-    var item = data.features.length - 1;
-    var feature = data.features[item];
-    console.log(feature);
+    console.log('draw.create:', e);
 
-    draw.setFeatureProperty(feature.id, 'type', 'restroom');
+    // var data = draw.getAll();
+
+    // newDrawFeature = true;
+
+    feature = e.features[0];
+    console.log('feature on draw.create:', feature);
+
+    idInput.value = feature.id;
+    lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
+    latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
+
+    // draw.setFeatureProperty(feature.id, 'type', 'restroom');
 
     // console.log('mapbox-gl-draw-hot:', map.getSource('mapbox-gl-draw-hot'));
     // console.log('mapbox-gl-draw-cold:', map.getSource('mapbox-gl-draw-cold'));
   });
 
-  map.on('click', function (e) {
-    if (draw.getFeatureIdsAt(e.point).length > 0) {
-      // console.log(draw.getFeatureIdsAt(e.point));
+  map.on('draw.update', function (e) {
+    console.log('draw.update', e);
 
-      var featureId = draw.getFeatureIdsAt(e.point)[0];
-      console.log(draw.get(featureId));
+    feature = e.features[0];
+
+    if (e.action === 'move') {
+      lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
+      latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
     }
   });
+
+  map.on('draw.delete', function (e) {
+    console.log('draw.delete', e);
+
+    idInput.value = '';
+    lonInput.value = '';
+    latInput.value = '';
+  });
+
+  map.on('draw.selectionchange', function (e) {
+    console.log('draw.selectionchange:', e);
+
+    // If selection changed to another point
+    if (e.features.length > 0) {
+      feature = e.features[0];
+
+      idInput.value = feature.id;
+      lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
+      latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
+    } else {
+      // Otherwise, if no point selected (clicked away from point)
+      idInput.value = '';
+      lonInput.value = '';
+      latInput.value = '';
+    }
+  });
+
+  // map.on('click', function (e) {
+  //   console.log('click:', e);
+  //
+  //   if (draw.getFeatureIdsAt(e.point).length > 0) {
+  //     // console.log(draw.getFeatureIdsAt(e.point));
+  //
+  //     var featureId = draw.getFeatureIdsAt(e.point)[0];
+  //     feature = draw.get(featureId);
+  //     console.log('feature on click:', feature);
+  //
+  //     idInput.value = feature.id;
+  //     lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
+  //     latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
+  //   } else if (!newDrawFeature) {
+  //     idInput.value = '';
+  //     lonInput.value = '';
+  //     latInput.value = '';
+  //   }
+  //
+  //   newDrawFeature = false;
+  // });
 
   function loadData () {
     $.ajax('https://' + user + '.carto.com/api/v2/sql?format=GeoJSON&q=' + sql, {
@@ -331,7 +458,7 @@ import { Spinner } from './spin.js';
       layerInput.type = 'radio';
       layerInput.name = 'base-layer';
       layerInput.value = l.label.toLowerCase();
-      if (l.label === 'Outdoors') { // Set Light style to checked by default (given loaded on landing); TODO: update as needed
+      if (l.label === 'Outdoors') { // Set Outdoor style to checked by default (given loaded on landing)
         layerInput.checked = true;
       }
       layerDiv.appendChild(layerInput);
