@@ -30,6 +30,10 @@ body {
   margin: 0 10px 40px 0;
 }
 
+.draw-form {
+  display: none;
+}
+
 .form-input,
 .form-label {
   margin-bottom: 6px;
@@ -87,7 +91,7 @@ input[type="text"] {
   width: 220px;
 }
 
-input:disabled+label {
+input:disabled {
   color: #ccc;
 }
 
@@ -117,7 +121,9 @@ input:valid+span:after {
 
 .layers-toggle {
   right: 10px;
-  top: 270px;
+  /* top: 270px; */
+  /* top: 230px; */
+  top: 160px;
 }
 
 /* Unopened lightbox */

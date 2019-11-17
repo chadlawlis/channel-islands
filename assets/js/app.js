@@ -1,7 +1,5 @@
 /* global $, mapboxgl, MapboxDraw */
 
-// !!! Search "TODO" to address remaining updates needed !!!
-
 import { Spinner } from './spin.js';
 
 (function () {
@@ -37,47 +35,56 @@ import { Spinner } from './spin.js';
     layersMenu, // Define globally so can be instantiated on data load when creating layer switchers
     baseLayersMenu, // Define globally so can be instantiated on data load when creating layer switchers
     overlayLayersMenu, // Define globally so can be instantiated on data load when creating layer switchers
+    form,
     idInput,
     latInput,
     lonInput,
-    feature,
+    feature, // for MapboxDraw
     mapLayers,
-    firstLabelLayer,
-    data,
-    types,
-    bboxFeatures,
-    bbox;
+    data;
 
-  var newDrawFeature = false;
+  var types = [];
+  var poiLayers = [];
+
+  // var newDrawFeature = false;
 
   var user = 'clawlis';
-  var sql = 'select cartodb_id, name, type, island, status, note, verified, icon, the_geom from clawlis.chis_poi where type = \'campground\' or type = \'restroom\' or type = \'drinking-water\' or type = \'viewpoint\' order by type, name';
+  var sql = 'select cartodb_id, name, type, island, status, note, verified, icon, text_offset, the_geom from clawlis.chis_poi where type = \'campground\' or type = \'restroom\' or type = \'drinking-water\' or type = \'viewpoint\' order by type, name';
+
+  // [[sw],[ne]]
+  var zoomToBounds = [[-120.47, 33.88], [-119.34, 34.09]];
+  var zoomToOptions = {
+    linear: true,
+    padding: 40
+  };
+
+  var maxBounds = [[-121, 32.88], [-118.34, 35.09]];
 
   mapboxgl.accessToken = 'pk.eyJ1IjoiY2hhZGxhd2xpcyIsImEiOiJlaERjUmxzIn0.P6X84vnEfttg0TZ7RihW1g';
 
   var map = new mapboxgl.Map({
     container: 'map',
+    customAttribution: '<a href="https://chadlawlis.com">&#169; Chad Lawlis</a>',
     hash: true,
-    style: 'mapbox://styles/mapbox/outdoors-v10',
-    customAttribution: '<a href="https://chadlawlis.com">&#169; Chad Lawlis</a>'
+    maxBounds: maxBounds,
+    maxZoom: 20,
+    style: 'mapbox://styles/chadlawlis/ck33csain03ur1cn6m2i3fkrp'
   });
 
-  // [[sw],[ne]]
-  var zoomToBounds = [[-120.47, 33.88], [-119.34, 34.09]]; // TODO: update
-  var zoomToOptions = {
-    linear: true,
-    padding: 40
-  };
   map.fitBounds(zoomToBounds, zoomToOptions);
 
   // Declare baseLayers for map style switcher
   // See baseLayers.forEach() in map.onLoad() for menu creation
   var baseLayers = [{
     label: 'Outdoors',
-    id: 'outdoors-v11'
+    // Modified copy of mapbox outdoors-v11
+    // w/ campsite, drinking-water, toilet, viewpoint maki icons/labels removed
+    id: 'ck33csain03ur1cn6m2i3fkrp'
   }, {
     label: 'Satellite',
-    id: 'satellite-streets-v11'
+    // Modified copy of mapbox satellite-streets-v11
+    // w/ campsite, drinking-water, toilet, viewpoint maki icons/labels removed
+    id: 'ck33doci91n1t1cqktmahtemc'
   }];
 
   // Create popup, but don't add it to the map yet
@@ -100,14 +107,7 @@ import { Spinner } from './spin.js';
   // Trigger mapData() on map style load (ensures data persists when map style changed)
   map.on('style.load', function () {
     mapLayers = map.getStyle().layers;
-
-    // Find the index of the settlement-label layer in the loaded map style, to place counties layer below
-    for (let i = 0; i < mapLayers.length; i++) {
-      if (mapLayers[i].id === 'settlement-label') {
-        firstLabelLayer = mapLayers[i].id;
-        break;
-      }
-    }
+    console.log('mapLayers on style.load:', mapLayers);
 
     if (data) {
       mapData(data);
@@ -115,7 +115,7 @@ import { Spinner } from './spin.js';
   });
 
   map.on('load', function () {
-  // Set minZoom as floor of (rounded down to nearest integer from) fitBounds zoom
+    // Set minZoom as floor of (rounded down to nearest integer from) fitBounds zoom
     var minZoom = map.getZoom();
     map.setMinZoom(Math.floor(minZoom));
 
@@ -132,7 +132,7 @@ import { Spinner } from './spin.js';
     }));
 
     // Add draw control to the map
-    map.addControl(draw);
+    map.addControl(draw, 'top-left');
 
     // Create custom "zoom to" control and implement as ES6 class
     // https://docs.mapbox.com/mapbox-gl-js/api/#icontrol
@@ -161,40 +161,9 @@ import { Spinner } from './spin.js';
     var zoomControl = document.getElementById('zoom-to-control');
     var zoomButton = zoomControl.firstElementChild;
     zoomButton.id = 'zoom-to-button';
-    zoomButton.title = 'Zoom to ...'; // TODO: add appropriate title for zoomToControl
+    zoomButton.title = 'Zoom to park extent';
     zoomButton.addEventListener('click', function () {
       map.fitBounds(zoomToBounds, zoomToOptions);
-    });
-
-    // Create custom "zoom to bbox" control and implement as ES6 class
-    // https://docs.mapbox.com/mapbox-gl-js/api/#icontrol
-    class ZoomBboxControl {
-      onAdd (map) {
-        this._map = map;
-        this._container = document.createElement('div');
-        this._container.id = 'bbox-control';
-        this._container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group bbox-control';
-        this._container.appendChild(document.createElement('button'));
-        return this._container;
-      }
-
-      onRemove () {
-        this._container.parentNode.removeChild(this._container);
-        this._map = undefined;
-      }
-    }
-
-    // Add custom "zoom to bbox" control to map
-    var zoomBboxControl = new ZoomBboxControl();
-    map.addControl(zoomBboxControl);
-
-    // Customize "zoom to bbox" control to display custom icon and fitBounds functionality
-    var bboxControl = document.getElementById('bbox-control');
-    var bboxButton = bboxControl.firstElementChild;
-    bboxButton.id = 'bbox';
-    bboxButton.title = 'Zoom to feature extent';
-    bboxButton.addEventListener('click', function () {
-      map.fitBounds(bbox, zoomToOptions);
     });
 
     // Create map style switcher structure
@@ -223,17 +192,15 @@ import { Spinner } from './spin.js';
     baseLayersMenu.id = 'base-layers';
     baseLayersMenu.className = 'form-menu';
 
-    var form = document.getElementById('form');
-    form.className = 'bottom-left map-overlay';
-
-    var formInputs = document.createElement('form');
-    formInputs.className = 'form-menu';
+    form = document.getElementById('draw-form');
+    form.className = 'bottom-left draw-form form-menu map-overlay';
 
     // Id text input
     var idInputDiv = document.createElement('div');
     idInputDiv.className = 'form-input id';
     var idLabel = document.createElement('label');
     idLabel.className = 'form-label';
+    idLabel.htmlFor = 'id';
     idLabel.textContent = 'ID';
     idInputDiv.appendChild(idLabel);
     idInput = document.createElement('input');
@@ -244,13 +211,14 @@ import { Spinner } from './spin.js';
     idInput.disabled = 'true';
     idInputDiv.appendChild(idInput);
 
-    formInputs.appendChild(idInputDiv);
+    form.appendChild(idInputDiv);
 
     // Latitude number input
     var latInputDiv = document.createElement('div');
     latInputDiv.className = 'form-input lat';
     var latLabel = document.createElement('label');
     latLabel.className = 'form-label';
+    latLabel.htmlFor = 'lat';
     latLabel.textContent = 'Latitude';
     latInputDiv.appendChild(latLabel);
     latInput = document.createElement('input');
@@ -263,13 +231,14 @@ import { Spinner } from './spin.js';
     latInput.disabled = 'true';
     latInputDiv.appendChild(latInput);
 
-    formInputs.appendChild(latInputDiv);
+    form.appendChild(latInputDiv);
 
     // Longitude number input
     var lonInputDiv = document.createElement('div');
     lonInputDiv.className = 'form-input lon';
     var lonLabel = document.createElement('label');
     lonLabel.className = 'form-label';
+    lonLabel.htmlFor = 'lon';
     lonLabel.textContent = 'Longitude';
     lonInputDiv.appendChild(lonLabel);
     lonInput = document.createElement('input');
@@ -282,15 +251,17 @@ import { Spinner } from './spin.js';
     lonInput.disabled = 'true';
     lonInputDiv.appendChild(lonInput);
 
-    formInputs.appendChild(lonInputDiv);
-
-    form.appendChild(formInputs);
+    form.appendChild(lonInputDiv);
 
     loadData();
   });
 
   map.on('draw.create', function (e) {
-    // console.log(map.getStyle().layers);
+    // console.log('mapbox-gl-draw-hot:', map.getSource('mapbox-gl-draw-hot'));
+    // console.log('mapbox-gl-draw-cold:', map.getSource('mapbox-gl-draw-cold'));
+    // console.log(map.getSource('syms')._data);
+
+    form.style.display = 'block';
 
     console.log('draw.create:', e);
 
@@ -306,9 +277,6 @@ import { Spinner } from './spin.js';
     latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
 
     // draw.setFeatureProperty(feature.id, 'type', 'restroom');
-
-    // console.log('mapbox-gl-draw-hot:', map.getSource('mapbox-gl-draw-hot'));
-    // console.log('mapbox-gl-draw-cold:', map.getSource('mapbox-gl-draw-cold'));
   });
 
   map.on('draw.update', function (e) {
@@ -325,6 +293,7 @@ import { Spinner } from './spin.js';
   map.on('draw.delete', function (e) {
     console.log('draw.delete', e);
 
+    form.style.display = 'none';
     idInput.value = '';
     lonInput.value = '';
     latInput.value = '';
@@ -335,6 +304,10 @@ import { Spinner } from './spin.js';
 
     // If selection changed to another point
     if (e.features.length > 0) {
+      if (form.style.display === 'none') {
+        form.style.display = 'block';
+      }
+
       feature = e.features[0];
 
       idInput.value = feature.id;
@@ -342,6 +315,7 @@ import { Spinner } from './spin.js';
       latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
     } else {
       // Otherwise, if no point selected (clicked away from point)
+      form.style.display = 'none';
       idInput.value = '';
       lonInput.value = '';
       latInput.value = '';
@@ -382,7 +356,7 @@ import { Spinner } from './spin.js';
       success: function (response) {
         data = response;
 
-        console.log(data);
+        console.log('data on loadData():', data);
 
         // Populate overlayLayersMenu if it has not been yet (i.e., on page landing)
         if (!overlayLayersMenu.hasChildNodes()) {
@@ -409,41 +383,66 @@ import { Spinner } from './spin.js';
   }
 
   function addOverlayLayersMenu () {
-    types = [];
     data.features.forEach(function (f) {
-      let props = f.properties;
+      var props = f.properties;
 
       // If feature type hasn't been added to types array yet, add it to layer switcher
       if (types.indexOf(props.type) === -1) {
         types.push(props.type);
-        var layerDiv = document.createElement('div');
-        layerDiv.className = 'toggle';
-        var layerInput = document.createElement('input');
-        layerInput.type = 'checkbox';
-        layerInput.id = props.type;
-        layerInput.checked = true;
-        var layerLabel = document.createElement('label');
 
-        if (props.type === 'drinking-water') {
-          layerLabel.textContent = 'Drinking Water';
-        } else {
-          // Create layer label from type: "restroom" -> "Restrooms"
-          layerLabel.textContent = props.type.charAt(0).toUpperCase() + props.type.slice(1) + 's';
-        }
+        // Add object for each layer with id and visibility
+        var layer = {
+          id: props.type,
+          visibility: 'visible'
+        };
 
-        layerDiv.appendChild(layerInput);
-        layerDiv.appendChild(layerLabel);
-        overlayLayersMenu.appendChild(layerDiv);
-
-        layerInput.addEventListener('change', function (e) {
-          map.setLayoutProperty(props.type, 'visibility', e.target.checked ? 'visible' : 'none');
-        });
+        poiLayers.push(layer);
       }
     });
 
-    console.log('types on addOverlayLayersMenu:', types);
+    poiLayers.forEach(function (l) {
+      var layerDiv = document.createElement('div');
+      layerDiv.className = 'toggle';
+      var layerInput = document.createElement('input');
+      layerInput.type = 'checkbox';
+      layerInput.id = l.id;
+      layerInput.checked = true;
+      var layerLabel = document.createElement('label');
+
+      if (l.id === 'drinking-water') {
+        layerLabel.textContent = 'Drinking Water';
+      } else {
+        // Create layer label from type (e.g., "restroom" -> "Restrooms")
+        layerLabel.textContent = l.id.charAt(0).toUpperCase() + l.id.slice(1) + 's';
+      }
+
+      layerDiv.appendChild(layerInput);
+      layerDiv.appendChild(layerLabel);
+      overlayLayersMenu.appendChild(layerDiv);
+
+      layerInput.addEventListener('change', function (e) {
+        map.setLayoutProperty(l.id, 'visibility', e.target.checked ? 'visible' : 'none');
+        l.visibility = map.getLayoutProperty(l.id, 'visibility');
+      });
+    });
+
+    // console.log('types on addOverlayLayersMenu:', types);
+    // console.log('poiLayers on addOverlayLayersMenu:', poiLayers);
 
     layersMenu.appendChild(overlayLayersMenu);
+
+    // Sort poiLayers by id in descending order before they are added to map
+    // so that layers render in same order as overlay layer switcher order:
+    //   campground, drinking-water, restroom, viewpoint
+    // Otherwise they render in reverse, with layers added last rendered first:
+    //   viewpoint, restroom, drinking-water, campground
+    // (moved here, out from mapData(), given only needed once)
+    poiLayers.sort(function (a, b) {
+      // https://stackoverflow.com/a/35092754
+      return b.id.localeCompare(a.id);
+    });
+
+    // console.log('poiLayers after sort:', poiLayers);
 
     addBaseLayersMenu();
   }
@@ -481,7 +480,7 @@ import { Spinner } from './spin.js';
       var layerId = layer.target.id;
       // Only set style if different than current style
       if (map.getStyle().metadata['mapbox:origin'] !== layerId) {
-        map.setStyle('mapbox://styles/mapbox/' + layerId);
+        map.setStyle('mapbox://styles/chadlawlis/' + layerId);
         // setStyle also triggers map.on('style.load') above, which includes a renewed call to mapData()
       }
     }
@@ -502,8 +501,6 @@ import { Spinner } from './spin.js';
   }
 
   function mapData () {
-    console.log('data on mapData():', data);
-
     // data.features.forEach(function (f) {
     //   let props = f.properties;
     //
@@ -512,9 +509,9 @@ import { Spinner } from './spin.js';
     //   }
     // });
 
-    types.forEach(function (t) {
-      if (map.getLayer(t)) {
-        map.removeLayer(t);
+    poiLayers.forEach(function (l) {
+      if (map.getLayer(l.id)) {
+        map.removeLayer(l.id);
       }
     });
 
@@ -522,41 +519,117 @@ import { Spinner } from './spin.js';
       map.removeSource('data');
     }
 
-    // Reverse types order so that features render in same order as overlay layer switcher order:
-    // campground, drinking-water, restroom, viewpoint
-    // (otherwise, they render in reverse of original order: viewpoint, restroom, drinking-water, campground)
-    types = types.reverse();
-
-    types.forEach(function (t) {
+    poiLayers.forEach(function (l) {
       if (!map.getSource('data')) {
         map.addSource('data', {
           type: 'geojson',
           data: data
         });
       }
-      if (!map.getLayer(t)) {
+
+      if (!map.getLayer(l.id)) {
         map.addLayer({
-          id: t,
+          id: l.id,
           type: 'symbol',
           source: 'data',
           layout: {
-            'icon-image': '{icon}',
-            'icon-allow-overlap': true,
-            'text-field': '{name}',
-            // 'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
-            'text-size': 10,
+            'icon-image': ['concat', ['get', 'icon'], '-15'], // '{icon}-15',
+            // 'icon-image': [
+            //   'case',
+            //   ['==', ['get', 'icon'], 'viewpoint'],
+            //   'viewpoint',
+            //   ['concat', ['get', 'icon'], '-15']
+            // ],
+            // 'icon-allow-overlap': true, // defaults to false
+            'text-field': ['get', 'name'], // '{name}',
+            'text-font': ['Open Sans Bold', 'Arial Unicode MS Regular'], // defaults to ['Open Sans Regular', 'Arial Unicode MS Regular']
+            'text-size': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              // when zoom <= 10, text-size: 10
+              10, 10,
+              // when zoom >= 18, text-size: 12
+              18, 12
+              // in between, text-size will be linearly interpolated between 10 and 18 pixels
+            ],
+            // 'text-line-height': 1.4, // defaults to 1.2
             // 'text-transform': 'uppercase',
-            'text-letter-spacing': 0.05
-            // 'text-offset': [0, 1.5]
+            'text-letter-spacing': 0.05,
+            // 'text-offset': ['to-number', ['get', 'text_offset']], // '{text_offset}'
+            // 'text-offset': [
+            //   'case',
+            //   ['==', ['get', 'text_offset'], 2], // if text_offset = 2
+            //   ['literal', [0, 2]], // if true set text-offset property to [0, 2]
+            //   ['literal', [0, 1.5]] // if false set text-offset property to [0, 1.5]
+            // ],
+            'text-offset': [
+              'step',
+              ['get', 'text_offset'],
+              ['literal', [0, 1.5]], // default to [0, 1.5] -> 1.5 ems offset above anchor
+              2, ['literal', [0, 2]], // when "text_offset" = 2 then [0, 2] -> 2 ems offset above anchor
+              2.5, ['literal', [0, 2.5]] // when "text_offset" = 3 then [0, 2.5] -> 2.5 ems offset above anchor
+            ],
+            'text-max-width': 8, // defaults to 10 ems
+            visibility: l.visibility
           },
           paint: {
             'text-color': '#333',
             'text-halo-color': '#fff',
-            'text-halo-width': 2
+            'text-halo-width': 2,
+            'text-halo-blur': 0.5
           },
-          'filter': ['==', 'type', t]
-        }); // }, firstLabelLayer);
+          filter: ['==', 'type', l.id]
+        });
       }
+
+      // Add popup for each layer
+      // Change cursor to pointer on parcel layer mouseover
+      map.on('click', l.id, function (e) {
+        map.getCanvas().style.cursor = 'pointer';
+
+        var props = e.features[0].properties;
+        console.log(props);
+        console.log(typeof props.text_offset);
+        console.log(JSON.parse(props.text_offset));
+      });
+
+      // map.on('mousemove', l.id, function (e) {
+      //   map.getCanvas().style.cursor = 'pointer';
+      //
+      //   var popupContent;
+      //   var props = e.features[0].properties;
+      //
+      //   popupContent = '<div><div class="popup-menu"><p><b>' + props.name + '</b></p>' +
+      //   '<p style="margin-top: 2px">' + props.state_name + '</p></div>' +
+      //   '<hr>' +
+      //   '<div class="popup-menu"><p><b>Hard Freeze Date</b></p>' +
+      //   '<p class="small" style="margin-top: 2px">' + fLayer.substring(0, 1) + ' of past 10 years</p><p>';
+      //
+      //   if (props[fDate] !== 'null') {
+      //     popupContent += props[fDate] + '</p>';
+      //   } else {
+      //     popupContent += 'N/A</p>';
+      //   }
+      //
+      //   popupContent += '<p><b>Latest Silking Date</b></p><p>';
+      //
+      //   if (props[sDate] !== 'null') {
+      //     popupContent += props[sDate] + '</p></div></div>';
+      //   } else {
+      //     popupContent += 'N/A</p></div></div>';
+      //   }
+      //
+      //   popup.setLngLat(e.lngLat)
+      //     .setHTML(popupContent)
+      //     .addTo(map);
+      // });
+      //
+      // // Change cursor back to default ("grab") on parcel layer mouseleave
+      // map.on('mouseleave', l.id, function () {
+      //   map.getCanvas().style.cursor = '';
+      //   popup.remove();
+      // });
     });
 
     // data.features.forEach(function (f) {
