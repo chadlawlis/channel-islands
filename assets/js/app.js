@@ -238,7 +238,7 @@ import { Spinner } from './spin.js';
     // idInput.value = feature.id;
     lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
     latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
-    typeSelect.focus({ preventScroll: true });
+    // typeSelect.focus({ preventScroll: true });
 
     // draw.setFeatureProperty(feature.id, 'type', 'restroom');
   });
