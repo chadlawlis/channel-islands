@@ -239,7 +239,7 @@ import { Spinner } from './spin.js';
     lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
     latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
 
-    typeSelect.focus({ preventScroll: true });
+    typeSelect.focus(); // typeSelect.focus({ preventScroll: true });
 
     // draw.setFeatureProperty(feature.id, 'type', 'restroom');
   });
@@ -606,7 +606,7 @@ import { Spinner } from './spin.js';
         noteTextArea.disabled = false;
         verifiedInput.disabled = false;
 
-        nameInput.focus({ preventScroll: true });
+        nameInput.focus(); // nameInput.focus({ preventScroll: true });
       } else {
         nameLabel.className = 'form-label-disabled';
         statusLabel.className = 'form-label-disabled';
