@@ -238,7 +238,8 @@ import { Spinner } from './spin.js';
     // idInput.value = feature.id;
     lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
     latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
-    // typeSelect.focus({ preventScroll: true });
+
+    typeSelect.focus({ preventScroll: true });
 
     // draw.setFeatureProperty(feature.id, 'type', 'restroom');
   });
@@ -604,6 +605,8 @@ import { Spinner } from './spin.js';
         statusInputClosed.disabled = false;
         noteTextArea.disabled = false;
         verifiedInput.disabled = false;
+
+        nameInput.focus({ preventScroll: true });
       } else {
         nameLabel.className = 'form-label-disabled';
         statusLabel.className = 'form-label-disabled';
@@ -717,7 +720,7 @@ import { Spinner } from './spin.js';
     noteTextAreaDiv.appendChild(noteLabel);
     noteTextArea = document.createElement('textarea');
     noteTextArea.id = 'note-text-area';
-    noteTextArea.name = 'note-text-area';
+    noteTextArea.name = 'note';
     noteTextArea.placeholder = 'Include a note (optional)';
     noteTextArea.rows = 2;
     noteTextArea.cols = 24;

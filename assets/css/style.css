@@ -111,9 +111,9 @@ input:disabled+label {
   color: #aaa;
 }
 
-input:invalid {
+/* input:invalid {
   border: 1px solid red;
-}
+} */
 
 input:invalid+span:after {
   content: '✖';
