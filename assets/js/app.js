@@ -249,10 +249,13 @@ import { Spinner } from './spin.js';
 
     feature = e.features[0];
 
-    if (e.action === 'move') {
-      lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
-      latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
-    }
+    lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
+    latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
+
+    // if (e.action === 'move') {
+    //   lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
+    //   latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
+    // }
   });
 
   map.on('draw.delete', function (e) {
@@ -606,7 +609,7 @@ import { Spinner } from './spin.js';
         noteTextArea.disabled = false;
         verifiedInput.disabled = false;
 
-        nameInput.focus();
+        // nameInput.focus();
       } else {
         nameLabel.className = 'form-label-disabled';
         statusLabel.className = 'form-label-disabled';
