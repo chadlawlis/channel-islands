@@ -142,17 +142,17 @@ import { Spinner } from './spin.js';
     // Add zoom and rotation controls
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }));
 
-    // // Add geolocate control
-    // // https://docs.mapbox.com/mapbox-gl-js/api/#geolocatecontrol
-    // map.addControl(new mapboxgl.GeolocateControl({
-    //   positionOptions: {
-    //     enableHighAccuracy: true
-    //   },
-    //   trackUserLocation: true
-    // }));
-    //
-    // // Add draw control to the map
-    // map.addControl(draw, 'top-left');
+    // Add geolocate control
+    // https://docs.mapbox.com/mapbox-gl-js/api/#geolocatecontrol
+    map.addControl(new mapboxgl.GeolocateControl({
+      positionOptions: {
+        enableHighAccuracy: true
+      },
+      trackUserLocation: true
+    }));
+
+    // Add draw control to the map
+    map.addControl(draw, 'top-left');
 
     // Create custom "zoom to" control and implement as ES6 class
     // https://docs.mapbox.com/mapbox-gl-js/api/#icontrol
