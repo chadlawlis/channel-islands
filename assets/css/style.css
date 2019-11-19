@@ -30,6 +30,10 @@ body {
   margin: 0 10px 40px 0;
 }
 
+.clear-both {
+  clear: both;
+}
+
 .draw-form {
   display: none;
 }

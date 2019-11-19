@@ -238,7 +238,7 @@ import { Spinner } from './spin.js';
     // idInput.value = feature.id;
     lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
     latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
-    typeSelect.focus({ preventScroll: true });
+    // typeSelect.focus({ preventScroll: true });
 
     // draw.setFeatureProperty(feature.id, 'type', 'restroom');
   });
@@ -555,7 +555,9 @@ import { Spinner } from './spin.js';
 
     // Type select element
     var typeSelectDiv = document.createElement('div');
-    typeSelectDiv.className = 'form-input v-middle';
+    // Clear both floating elements that precede it (lat + lon)
+    // https://developer.mozilla.org/en-US/docs/Web/CSS/clear
+    typeSelectDiv.className = 'clear-both form-input v-middle';
     var typeLabel = document.createElement('label');
     typeLabel.id = 'type-label';
     typeLabel.className = 'form-label';
