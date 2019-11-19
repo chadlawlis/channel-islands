@@ -35,25 +35,22 @@ body {
 }
 
 .form-input,
-.form-label {
+.form-label,
+.form-label-disabled {
   margin-bottom: 6px;
 }
 
-.form-label {
+.form-label,
+.form-label-disabled {
   display: block;
+}
+
+.form-label-disabled {
+  color: #aaa;
 }
 
 .form-input label {
   font-weight: bold;
-}
-
-.form-input.lat {
-  float: left;
-  margin: 0 8px 0 0;
-}
-
-.form-input.lon {
-  float: right;
 }
 
 .form-menu {
@@ -74,25 +71,44 @@ body {
   color: #333;
 }
 
-input[type="checkbox"],
-input[type="radio"] {
+input[type='checkbox'],
+input[type='radio'] {
   vertical-align: middle;
 }
 
-input[type="number"] {
+input[type='number'] {
   color: #333;
   font: 12px -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, Helvetica, sans-serif;
   width: 85px;
 }
 
-input[type="text"] {
+input[type='text'],
+select,
+textarea {
   color: #333;
   font: 12px -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, Helvetica, sans-serif;
-  width: 220px;
+}
+
+input[type='text'],
+textarea {
+  border: 1px solid #aaa;
+}
+
+input[type='text']:disabled,
+textarea:disabled {
+  border: 1px solid #ccc;
 }
 
 input:disabled {
-  color: #ccc;
+  color: #aaa;
+}
+
+input:disabled+label {
+  color: #aaa;
+}
+
+input:invalid {
+  border: 1px solid red;
 }
 
 input:invalid+span:after {
@@ -103,6 +119,14 @@ input:invalid+span:after {
 input:valid+span:after {
   content: '✔';
   padding-left: 5px;
+}
+
+.input-button {
+  font-size: 12px;
+}
+
+.input-button:first-child {
+  margin-right: 8px;
 }
 
 .layers-image {
@@ -124,6 +148,15 @@ input:valid+span:after {
   /* top: 270px; */
   /* top: 230px; */
   top: 160px;
+}
+
+.lat {
+  float: left;
+  margin-right: 8px;
+}
+
+.lon {
+  float: right;
 }
 
 /* Unopened lightbox */
@@ -200,7 +233,7 @@ input:valid+span:after {
   justify-content: center;
   background: #e3e3e3;
   color: #333;
-  content: "×";
+  content: '×';
   cursor: pointer;
   font-size: large;
   z-index: 11; /* position above mapbox-ctrl elements + .lightbox figcaption */
@@ -214,7 +247,7 @@ input:valid+span:after {
   height: 100%;
   position: fixed;
   background: rgba(51, 51, 51, 0.8);
-  content: "";
+  content: '';
   cursor: default;
   z-index: 9; /* position above mapbox-ctrl elements, below .lightbox figcaption */
 }
@@ -275,22 +308,37 @@ input:valid+span:after {
   position: absolute;
 }
 
+.type-icon-span {
+  background-position: 50% 50%;
+  background-repeat: no-repeat;
+  background-size: 15px 15px;
+  display: inline-block;
+  height: 15px;
+  margin-left: 5px;
+  width: 15px;
+}
+
 .toggle label {
   margin-left: 5px;
   vertical-align: middle;
 }
 
-.usa-control {
-  /* https://opportunityatlas.org/public/images/usa.svg */
-  background-image: url(../img/usa.svg);
-  background-position: 50% 50%;
-  background-repeat: no-repeat;
-  background-size: 22px 22px;
+.status label {
+  font-weight: normal;
+  margin: 0 8px 0 5px;
+}
+
+.status input[type='radio'] {
+  vertical-align: baseline;
 }
 
 .zoom-to-control {
   background-image: url(../img/usa.svg);
   background-position: 50% 50%;
   background-repeat: no-repeat;
-  background-size: 20px 20px;
+  background-size: 22px 22px;
+}
+
+.v-middle {
+  vertical-align: middle;
 }

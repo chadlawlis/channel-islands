@@ -1,4 +1,4 @@
-/* global $, mapboxgl, MapboxDraw */
+/* global fetch, mapboxgl, MapboxDraw */
 
 import { Spinner } from './spin.js';
 
@@ -36,20 +36,40 @@ import { Spinner } from './spin.js';
     baseLayersMenu, // Define globally so can be instantiated on data load when creating layer switchers
     overlayLayersMenu, // Define globally so can be instantiated on data load when creating layer switchers
     form,
-    idInput,
+    // idInput,
     latInput,
     lonInput,
+    typeSelect,
+    nameLabel,
+    nameInput,
+    statusLabel,
+    statusInputOpen,
+    statusInputClosed,
+    noteLabel,
+    noteTextArea,
+    verifiedLabel,
+    verifiedInput,
     feature, // for MapboxDraw
     mapLayers,
-    data;
+    data,
+    submitButton,
+    resetButton;
 
   var types = [];
   var poiLayers = [];
 
+  var features = []; //  for MapboxDraw
+
   // var newDrawFeature = false;
 
   var user = 'clawlis';
-  var sql = 'select cartodb_id, name, type, island, status, note, verified, icon, text_offset, the_geom from clawlis.chis_poi where type = \'campground\' or type = \'restroom\' or type = \'drinking-water\' or type = \'viewpoint\' order by type, name';
+  // CARTO GET sql: includes created_at and updated_at in EST as strings, including leading zero for single-digit days
+  var getSQL = 'select cartodb_id, name, type, island, status, note, verified, icon, text_offset, ' +
+  'extract(year from created_at at time zone \'est\')::text || \'-\' || extract(month from created_at at time zone \'est\')::text || \'-\' || to_char(extract(day from created_at at time zone \'est\')::integer, \'fm00\') as created_at, ' +
+  'extract(year from updated_at at time zone \'est\')::text || \'-\' || extract(month from updated_at at time zone \'est\')::text || \'-\' || to_char(extract(day from updated_at at time zone \'est\')::integer, \'fm00\') as updated_at, ' +
+  'the_geom from clawlis.chis_poi order by type, name';
+  var postSQL;
+  var key = '1HNloqkcuddZcO5qOStx7w';
 
   // [[sw],[ne]]
   var zoomToBounds = [[-120.47, 33.88], [-119.34, 34.09]];
@@ -107,7 +127,7 @@ import { Spinner } from './spin.js';
   // Trigger mapData() on map style load (ensures data persists when map style changed)
   map.on('style.load', function () {
     mapLayers = map.getStyle().layers;
-    console.log('mapLayers on style.load:', mapLayers);
+    // console.log('mapLayers on style.load:', mapLayers);
 
     if (data) {
       mapData(data);
@@ -195,65 +215,7 @@ import { Spinner } from './spin.js';
     form = document.getElementById('draw-form');
     form.className = 'bottom-left draw-form form-menu map-overlay';
 
-    // Id text input
-    var idInputDiv = document.createElement('div');
-    idInputDiv.className = 'form-input id';
-    var idLabel = document.createElement('label');
-    idLabel.className = 'form-label';
-    idLabel.htmlFor = 'id';
-    idLabel.textContent = 'ID';
-    idInputDiv.appendChild(idLabel);
-    idInput = document.createElement('input');
-    idInput.id = 'id';
-    idInput.type = 'text';
-    idInput.name = 'id';
-    idInput.required = 'true';
-    idInput.disabled = 'true';
-    idInputDiv.appendChild(idInput);
-
-    form.appendChild(idInputDiv);
-
-    // Latitude number input
-    var latInputDiv = document.createElement('div');
-    latInputDiv.className = 'form-input lat';
-    var latLabel = document.createElement('label');
-    latLabel.className = 'form-label';
-    latLabel.htmlFor = 'lat';
-    latLabel.textContent = 'Latitude';
-    latInputDiv.appendChild(latLabel);
-    latInput = document.createElement('input');
-    latInput.id = 'lat';
-    latInput.type = 'number';
-    latInput.name = 'lat';
-    latInput.min = '-90';
-    latInput.max = '90';
-    latInput.required = 'true';
-    latInput.disabled = 'true';
-    latInputDiv.appendChild(latInput);
-
-    form.appendChild(latInputDiv);
-
-    // Longitude number input
-    var lonInputDiv = document.createElement('div');
-    lonInputDiv.className = 'form-input lon';
-    var lonLabel = document.createElement('label');
-    lonLabel.className = 'form-label';
-    lonLabel.htmlFor = 'lon';
-    lonLabel.textContent = 'Longitude';
-    lonInputDiv.appendChild(lonLabel);
-    lonInput = document.createElement('input');
-    lonInput.id = 'lat';
-    lonInput.type = 'number';
-    lonInput.name = 'lat';
-    lonInput.min = '-180';
-    lonInput.max = '180';
-    lonInput.required = 'true';
-    lonInput.disabled = 'true';
-    lonInputDiv.appendChild(lonInput);
-
-    form.appendChild(lonInputDiv);
-
-    loadData();
+    getData();
   });
 
   map.on('draw.create', function (e) {
@@ -265,16 +227,18 @@ import { Spinner } from './spin.js';
 
     console.log('draw.create:', e);
 
-    // var data = draw.getAll();
-
     // newDrawFeature = true;
 
     feature = e.features[0];
     console.log('feature on draw.create:', feature);
 
-    idInput.value = feature.id;
+    features = draw.getAll();
+    console.log('features on draw.create:', features);
+
+    // idInput.value = feature.id;
     lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
     latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
+    typeSelect.focus();
 
     // draw.setFeatureProperty(feature.id, 'type', 'restroom');
   });
@@ -287,6 +251,7 @@ import { Spinner } from './spin.js';
     if (e.action === 'move') {
       lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
       latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
+      typeSelect.focus();
     }
   });
 
@@ -294,7 +259,7 @@ import { Spinner } from './spin.js';
     console.log('draw.delete', e);
 
     form.style.display = 'none';
-    idInput.value = '';
+    // idInput.value = '';
     lonInput.value = '';
     latInput.value = '';
   });
@@ -310,13 +275,14 @@ import { Spinner } from './spin.js';
 
       feature = e.features[0];
 
-      idInput.value = feature.id;
+      // idInput.value = feature.id;
       lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
       latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
+      typeSelect.focus();
     } else {
       // Otherwise, if no point selected (clicked away from point)
       form.style.display = 'none';
-      idInput.value = '';
+      // idInput.value = '';
       lonInput.value = '';
       latInput.value = '';
     }
@@ -344,41 +310,70 @@ import { Spinner } from './spin.js';
   //   newDrawFeature = false;
   // });
 
-  function loadData () {
-    $.ajax('https://' + user + '.carto.com/api/v2/sql?format=GeoJSON&q=' + sql, {
-      beforeSend: function () {
-        spinner.spin(target);
-      },
-      complete: function () {
-        spinner.stop();
-      },
-      dataType: 'json',
-      success: function (response) {
-        data = response;
-
-        console.log('data on loadData():', data);
+  function getData () {
+    fetch('https://' + user + '.carto.com/api/v2/sql?format=GeoJSON&q=' + getSQL)
+      .then(res => res.json())
+      .then(getData => {
+        data = getData;
+        console.log('data on getData():', data);
 
         // Populate overlayLayersMenu if it has not been yet (i.e., on page landing)
         if (!overlayLayersMenu.hasChildNodes()) {
           addOverlayLayersMenu();
         }
 
-        mapData();
-      },
-      error: function () {
-        spinner.stop();
-      },
-      statusCode: {
-        400: function () {
-          window.alert('Error (400): Bad request.');
-        },
-        404: function () {
-          window.alert('Error (404): The requested resource could not be found.');
-        },
-        500: function () {
-          window.alert('Error (500): Internal server error.');
+        // Populate form if it has not been yet (i.e., on page landing)
+        if (!form.hasChildNodes()) {
+          buildForm();
         }
-      }
+
+        mapData();
+        spinner.stop();
+      }).catch(err => {
+        spinner.stop();
+        window.alert('Error:', err);
+      });
+
+    // $.ajax('https://' + user + '.carto.com/api/v2/sql?format=GeoJSON&q=' + getSQL, {
+    //   beforeSend: function () {
+    //     spinner.spin(target);
+    //   },
+    //   complete: function () {
+    //     spinner.stop();
+    //   },
+    //   dataType: 'json',
+    //   success: function (response) {
+    //     data = response;
+    //
+    //     console.log('data on getData():', data);
+    //
+    //     // Populate overlayLayersMenu if it has not been yet (i.e., on page landing)
+    //     if (!overlayLayersMenu.hasChildNodes()) {
+    //       addOverlayLayersMenu();
+    //     }
+    //
+    //     mapData();
+    //   },
+    //   error: function () {
+    //     spinner.stop();
+    //   },
+    //   statusCode: {
+    //     400: function () {
+    //       window.alert('Error (400): Bad request.');
+    //     },
+    //     404: function () {
+    //       window.alert('Error (404): The requested resource could not be found.');
+    //     },
+    //     500: function () {
+    //       window.alert('Error (500): Internal server error.');
+    //     }
+    //   }
+    // });
+  }
+
+  function postData () {
+    fetch('https://' + user + '.carto.com/api/v2/sql?q=' + postSQL + '&api_key=' + key, {
+      method: 'POST'
     });
   }
 
@@ -500,6 +495,316 @@ import { Spinner } from './spin.js';
     });
   }
 
+  function buildForm () {
+    // var formTitle = document.createElement('div');
+    // formTitle.className = 'form-menu title';
+    // formTitle.innerHTML = '<h1>Add a point</h1>';
+    // form.appendChild(formTitle);
+
+    // // Id text input
+    // var idInputDiv = document.createElement('div');
+    // idInputDiv.className = 'form-input id';
+    // var idLabel = document.createElement('label');
+    // idLabel.className = 'form-label';
+    // idLabel.htmlFor = 'id';
+    // idLabel.textContent = 'ID';
+    // idInputDiv.appendChild(idLabel);
+    // idInput = document.createElement('input');
+    // idInput.id = 'id-input';
+    // idInput.type = 'text';
+    // idInput.name = 'id';
+    // idInput.required = true;
+    // idInput.disabled = true;
+    // idInputDiv.appendChild(idInput);
+    //
+    // form.appendChild(idInputDiv);
+
+    // Latitude number input
+    var latInputDiv = document.createElement('div');
+    latInputDiv.className = 'form-input lat';
+    var latLabel = document.createElement('label');
+    latLabel.className = 'form-label-disabled';
+    latLabel.htmlFor = 'lat';
+    latLabel.textContent = 'Latitude';
+    latInputDiv.appendChild(latLabel);
+    latInput = document.createElement('input');
+    latInput.id = 'lat-input';
+    latInput.type = 'number';
+    latInput.name = 'lat';
+    latInput.required = true;
+    latInput.disabled = true;
+    latInputDiv.appendChild(latInput);
+
+    form.appendChild(latInputDiv);
+
+    // Longitude number input
+    var lonInputDiv = document.createElement('div');
+    lonInputDiv.className = 'form-input lon';
+    var lonLabel = document.createElement('label');
+    lonLabel.className = 'form-label-disabled';
+    lonLabel.htmlFor = 'lon';
+    lonLabel.textContent = 'Longitude';
+    lonInputDiv.appendChild(lonLabel);
+    lonInput = document.createElement('input');
+    lonInput.id = 'lon-input';
+    lonInput.type = 'number';
+    lonInput.name = 'lon';
+    lonInput.required = true;
+    lonInput.disabled = true;
+    lonInputDiv.appendChild(lonInput);
+
+    form.appendChild(lonInputDiv);
+
+    // Type select element
+    var typeSelectDiv = document.createElement('div');
+    typeSelectDiv.className = 'form-input v-middle';
+    var typeLabel = document.createElement('label');
+    typeLabel.id = 'type-label';
+    typeLabel.className = 'form-label';
+    typeLabel.htmlFor = 'type';
+    typeLabel.textContent = 'Type';
+    typeSelectDiv.appendChild(typeLabel);
+    typeSelect = document.createElement('select');
+    typeSelect.id = 'type-select';
+    typeSelect.name = 'type';
+    typeSelect.required = true;
+
+    var typeSelectDefaultOption = document.createElement('option');
+    typeSelectDefaultOption.value = '';
+    typeSelectDefaultOption.textContent = '-- Select type --';
+    typeSelect.appendChild(typeSelectDefaultOption);
+
+    types.forEach(t => {
+      var option = document.createElement('option');
+      option.value = t;
+
+      if (t === 'drinking-water') {
+        option.textContent = 'Drinking Water';
+      } else {
+        option.textContent = t.charAt(0).toUpperCase() + t.slice(1);
+      }
+
+      typeSelect.appendChild(option);
+    });
+
+    var typeIconSpan = document.createElement('span');
+    typeIconSpan.id = 'type-icon-span';
+    typeIconSpan.className = 'type-icon-span v-middle';
+
+    typeSelect.addEventListener('change', e => {
+      var val = e.target.value;
+
+      if (e.target.validity.valid) {
+        nameLabel.className = 'form-label';
+        statusLabel.className = 'form-label';
+        noteLabel.className = 'form-label';
+
+        nameInput.disabled = false;
+        statusInputOpen.disabled = false;
+        statusInputClosed.disabled = false;
+        noteTextArea.disabled = false;
+        verifiedInput.disabled = false;
+      } else {
+        nameLabel.className = 'form-label-disabled';
+        statusLabel.className = 'form-label-disabled';
+        noteLabel.className = 'form-label-disabled';
+
+        nameInput.disabled = true;
+        statusInputOpen.disabled = true;
+        statusInputClosed.disabled = true;
+        noteTextArea.disabled = true;
+        verifiedInput.disabled = true;
+      }
+
+      if (val === 'campground') {
+        typeIconSpan.style.backgroundImage = 'url(assets/img/maki/campsite-15.svg)';
+      } else if (val === 'drinking-water') {
+        typeIconSpan.style.backgroundImage = 'url(assets/img/maki/drinking-water-15.svg)';
+      } else if (val === 'restroom') {
+        typeIconSpan.style.backgroundImage = 'url(assets/img/maki/toilet-15.svg)';
+      } else if (val === 'viewpoint') {
+        typeIconSpan.style.backgroundImage = 'url(assets/img/maki/viewpoint-15.svg)';
+      } else {
+        typeIconSpan.style.backgroundImage = '';
+      }
+    });
+
+    typeSelectDiv.appendChild(typeSelect);
+    typeSelectDiv.appendChild(typeIconSpan);
+    form.appendChild(typeSelectDiv);
+
+    // Name text input
+    var nameInputDiv = document.createElement('div');
+    nameInputDiv.className = 'form-input';
+    nameLabel = document.createElement('label');
+    nameLabel.id = 'name-label';
+    nameLabel.className = 'form-label-disabled';
+    nameLabel.htmlFor = 'name';
+    nameLabel.textContent = 'Name';
+    nameInputDiv.appendChild(nameLabel);
+    nameInput = document.createElement('input');
+    nameInput.id = 'name-input';
+    nameInput.type = 'text';
+    nameInput.name = 'name';
+    nameInput.size = 26;
+    nameInput.required = true;
+    nameInput.disabled = true;
+    nameInputDiv.appendChild(nameInput);
+
+    nameInput.addEventListener('input', function (e) {
+      if (e.target.validity.valid) {
+        submitButton.disabled = false;
+      } else {
+        submitButton.disabled = true;
+      }
+    });
+
+    var inputValidity = document.createElement('span');
+    inputValidity.className = 'validity';
+    nameInputDiv.appendChild(inputValidity);
+
+    form.appendChild(nameInputDiv);
+
+    // Status radio input
+    var statusDiv = document.createElement('div');
+    statusDiv.className = 'form-input';
+    statusLabel = document.createElement('label');
+    statusLabel.id = 'status-label';
+    statusLabel.className = 'form-label-disabled';
+    statusLabel.htmlFor = 'status';
+    statusLabel.textContent = 'Status';
+    statusDiv.appendChild(statusLabel);
+    var statusInputDiv = document.createElement('div');
+    statusInputDiv.className = 'status';
+
+    // Status = Open
+    statusInputOpen = document.createElement('input');
+    statusInputOpen.id = 'status-input-open';
+    statusInputOpen.type = 'radio';
+    statusInputOpen.name = 'status';
+    statusInputOpen.value = 'Open';
+    statusInputOpen.checked = true;
+    statusInputOpen.disabled = true;
+    var statusInputOpenLabel = document.createElement('label');
+    statusInputOpenLabel.textContent = 'Open';
+    statusInputDiv.appendChild(statusInputOpen);
+    statusInputDiv.appendChild(statusInputOpenLabel);
+
+    // Status = Closed
+    statusInputClosed = document.createElement('input');
+    statusInputClosed.id = 'status-input-closed';
+    statusInputClosed.type = 'radio';
+    statusInputClosed.name = 'status';
+    statusInputClosed.value = 'Closed';
+    statusInputClosed.disabled = true;
+    var statusInputClosedLabel = document.createElement('label');
+    statusInputClosedLabel.textContent = 'Closed';
+    statusInputDiv.appendChild(statusInputClosed);
+    statusInputDiv.appendChild(statusInputClosedLabel);
+
+    statusDiv.appendChild(statusInputDiv);
+
+    form.appendChild(statusDiv);
+
+    // Note textarea
+    var noteTextAreaDiv = document.createElement('div');
+    noteTextAreaDiv.className = 'form-input';
+    noteLabel = document.createElement('label');
+    noteLabel.className = 'form-label-disabled';
+    noteLabel.id = 'note-label';
+    noteLabel.htmlFor = 'note';
+    noteLabel.textContent = 'Note';
+    noteTextAreaDiv.appendChild(noteLabel);
+    noteTextArea = document.createElement('textarea');
+    noteTextArea.id = 'note-text-area';
+    noteTextArea.name = 'note-text-area';
+    noteTextArea.placeholder = 'Include a note (optional)';
+    noteTextArea.rows = 2;
+    noteTextArea.cols = 24;
+    noteTextArea.disabled = true;
+    noteTextAreaDiv.appendChild(noteTextArea);
+
+    form.appendChild(noteTextAreaDiv);
+
+    // Verified checkbox input
+    var verifiedInputDiv = document.createElement('div');
+    verifiedInputDiv.className = 'form-input toggle';
+    verifiedInput = document.createElement('input');
+    verifiedInput.id = 'verified-input';
+    verifiedInput.type = 'checkbox';
+    verifiedInput.disabled = true;
+    verifiedLabel = document.createElement('label');
+    // verifiedLabel.className = 'form-label-disabled';
+    verifiedLabel.id = 'verified-label';
+    verifiedLabel.htmlFor = 'verified';
+    verifiedLabel.textContent = 'NPS Verified';
+    verifiedInputDiv.appendChild(verifiedInput);
+    verifiedInputDiv.appendChild(verifiedLabel);
+
+    form.appendChild(verifiedInputDiv);
+
+    var formInputButtonsDiv = document.createElement('div');
+    formInputButtonsDiv.className = 'form-input-buttons';
+
+    submitButton = document.createElement('button');
+    submitButton.id = 'submit-button';
+    submitButton.className = 'input-button';
+    submitButton.type = 'submit';
+    submitButton.disabled = true;
+    submitButton.textContent = 'Submit';
+
+    submitButton.addEventListener('click', function () {
+      var lat = latInput.value;
+      var lon = lonInput.value;
+      var type = typeSelect.value;
+      var name = nameInput.value;
+
+      // If name includes single quote, replace it with two single quotes for CARTO SQL API
+      // e.g., Chad's -> Chad''s
+      // https://stackoverflow.com/a/58331941
+      if (name.includes('\'')) {
+        name = nameInput.value.replace(/'+/g, "''");
+      }
+
+      var status = statusInputOpen.checked ? statusInputOpen.value : statusInputClosed.value;
+      var verified = verifiedInput.checked ? 'true' : 'false';
+
+      if (noteTextArea.value) {
+        var note = noteTextArea.value;
+
+        // If note includes single quote, replace it with two single quotes for CARTO SQL API
+        if (note.includes('\'')) {
+          note = note.replace(/'+/g, "''");
+        }
+
+        postSQL = 'insert into clawlis.chis_poi (type, name, status, note, verified, the_geom) ' +
+        'values (\'' + type + '\', \'' + name + '\', \'' + status + '\', \'' + note + '\', \'' + verified + '\', ' +
+        '(select ST_SetSRID(ST_MakePoint(' + lon + ', ' + lat + '), 4326)))';
+      } else {
+        postSQL = 'insert into clawlis.chis_poi (type, name, status, verified, the_geom) ' +
+        'values (\'' + type + '\', \'' + name + '\', \'' + status + '\', \'' + verified + '\', ' +
+        '(select ST_SetSRID(ST_MakePoint(' + lon + ', ' + lat + '), 4326)))';
+      }
+
+      postData().then(getData());
+    });
+
+    // resetButton = document.createElement('button');
+    // resetButton.id = 'reset-button';
+    // resetButton.className = 'input-button';
+    // resetButton.type = 'button';
+    // resetButton.disabled = true;
+    // resetButton.textContent = 'Reset';
+
+    // resetButton.addEventListener('click', function () {
+    //
+    // });
+
+    formInputButtonsDiv.appendChild(submitButton);
+    // formInputButtonsDiv.appendChild(resetButton);
+    form.appendChild(formInputButtonsDiv);
+  }
+
   function mapData () {
     // data.features.forEach(function (f) {
     //   let props = f.properties;
@@ -586,12 +891,8 @@ import { Spinner } from './spin.js';
       // Add popup for each layer
       // Change cursor to pointer on parcel layer mouseover
       map.on('click', l.id, function (e) {
-        map.getCanvas().style.cursor = 'pointer';
-
         var props = e.features[0].properties;
         console.log(props);
-        console.log(typeof props.text_offset);
-        console.log(JSON.parse(props.text_offset));
       });
 
       // map.on('mousemove', l.id, function (e) {
