@@ -238,7 +238,7 @@ import { Spinner } from './spin.js';
     // idInput.value = feature.id;
     lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
     latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
-    typeSelect.focus();
+    typeSelect.focus({ preventScroll: true });
 
     // draw.setFeatureProperty(feature.id, 'type', 'restroom');
   });
@@ -251,7 +251,6 @@ import { Spinner } from './spin.js';
     if (e.action === 'move') {
       lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
       latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
-      typeSelect.focus();
     }
   });
 
@@ -278,7 +277,6 @@ import { Spinner } from './spin.js';
       // idInput.value = feature.id;
       lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
       latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
-      typeSelect.focus();
     } else {
       // Otherwise, if no point selected (clicked away from point)
       form.style.display = 'none';
