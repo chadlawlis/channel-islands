@@ -142,17 +142,17 @@ import { Spinner } from './spin.js';
     // Add zoom and rotation controls
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }));
 
-    // Add geolocate control
-    // https://docs.mapbox.com/mapbox-gl-js/api/#geolocatecontrol
-    map.addControl(new mapboxgl.GeolocateControl({
-      positionOptions: {
-        enableHighAccuracy: true
-      },
-      trackUserLocation: true
-    }));
-
-    // Add draw control to the map
-    map.addControl(draw, 'top-left');
+    // // Add geolocate control
+    // // https://docs.mapbox.com/mapbox-gl-js/api/#geolocatecontrol
+    // map.addControl(new mapboxgl.GeolocateControl({
+    //   positionOptions: {
+    //     enableHighAccuracy: true
+    //   },
+    //   trackUserLocation: true
+    // }));
+    //
+    // // Add draw control to the map
+    // map.addControl(draw, 'top-left');
 
     // Create custom "zoom to" control and implement as ES6 class
     // https://docs.mapbox.com/mapbox-gl-js/api/#icontrol
@@ -218,74 +218,74 @@ import { Spinner } from './spin.js';
     getData();
   });
 
-  map.on('draw.create', function (e) {
-    // console.log('mapbox-gl-draw-hot:', map.getSource('mapbox-gl-draw-hot'));
-    // console.log('mapbox-gl-draw-cold:', map.getSource('mapbox-gl-draw-cold'));
-    // console.log(map.getSource('syms')._data);
-
-    form.style.display = 'block';
-
-    console.log('draw.create:', e);
-
-    // newDrawFeature = true;
-
-    feature = e.features[0];
-    console.log('feature on draw.create:', feature);
-
-    features = draw.getAll();
-    console.log('features on draw.create:', features);
-
-    // idInput.value = feature.id;
-    lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
-    latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
-
-    typeSelect.focus(); // typeSelect.focus({ preventScroll: true });
-
-    // draw.setFeatureProperty(feature.id, 'type', 'restroom');
-  });
-
-  map.on('draw.update', function (e) {
-    console.log('draw.update', e);
-
-    feature = e.features[0];
-
-    if (e.action === 'move') {
-      lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
-      latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
-    }
-  });
-
-  map.on('draw.delete', function (e) {
-    console.log('draw.delete', e);
-
-    form.style.display = 'none';
-    // idInput.value = '';
-    lonInput.value = '';
-    latInput.value = '';
-  });
-
-  map.on('draw.selectionchange', function (e) {
-    console.log('draw.selectionchange:', e);
-
-    // If selection changed to another point
-    if (e.features.length > 0) {
-      if (form.style.display === 'none') {
-        form.style.display = 'block';
-      }
-
-      feature = e.features[0];
-
-      // idInput.value = feature.id;
-      lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
-      latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
-    } else {
-      // Otherwise, if no point selected (clicked away from point)
-      form.style.display = 'none';
-      // idInput.value = '';
-      lonInput.value = '';
-      latInput.value = '';
-    }
-  });
+  // map.on('draw.create', function (e) {
+  //   // console.log('mapbox-gl-draw-hot:', map.getSource('mapbox-gl-draw-hot'));
+  //   // console.log('mapbox-gl-draw-cold:', map.getSource('mapbox-gl-draw-cold'));
+  //   // console.log(map.getSource('syms')._data);
+  //
+  //   form.style.display = 'block';
+  //
+  //   console.log('draw.create:', e);
+  //
+  //   // newDrawFeature = true;
+  //
+  //   feature = e.features[0];
+  //   console.log('feature on draw.create:', feature);
+  //
+  //   features = draw.getAll();
+  //   console.log('features on draw.create:', features);
+  //
+  //   // idInput.value = feature.id;
+  //   lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
+  //   latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
+  //
+  //   typeSelect.focus();
+  //
+  //   // draw.setFeatureProperty(feature.id, 'type', 'restroom');
+  // });
+  //
+  // map.on('draw.update', function (e) {
+  //   console.log('draw.update', e);
+  //
+  //   feature = e.features[0];
+  //
+  //   if (e.action === 'move') {
+  //     lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
+  //     latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
+  //   }
+  // });
+  //
+  // map.on('draw.delete', function (e) {
+  //   console.log('draw.delete', e);
+  //
+  //   form.style.display = 'none';
+  //   // idInput.value = '';
+  //   lonInput.value = '';
+  //   latInput.value = '';
+  // });
+  //
+  // map.on('draw.selectionchange', function (e) {
+  //   console.log('draw.selectionchange:', e);
+  //
+  //   // If selection changed to another point
+  //   if (e.features.length > 0) {
+  //     if (form.style.display === 'none') {
+  //       form.style.display = 'block';
+  //     }
+  //
+  //     feature = e.features[0];
+  //
+  //     // idInput.value = feature.id;
+  //     lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
+  //     latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
+  //   } else {
+  //     // Otherwise, if no point selected (clicked away from point)
+  //     form.style.display = 'none';
+  //     // idInput.value = '';
+  //     lonInput.value = '';
+  //     latInput.value = '';
+  //   }
+  // });
 
   // map.on('click', function (e) {
   //   console.log('click:', e);
@@ -606,7 +606,7 @@ import { Spinner } from './spin.js';
         noteTextArea.disabled = false;
         verifiedInput.disabled = false;
 
-        nameInput.focus(); // nameInput.focus({ preventScroll: true });
+        nameInput.focus();
       } else {
         nameLabel.className = 'form-label-disabled';
         statusLabel.className = 'form-label-disabled';
