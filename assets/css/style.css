@@ -10,6 +10,14 @@ body {
   padding: 0;
 }
 
+.about-control {
+  /* https://fontawesome.com/icons/info-circle?style=solid */
+  background-image: url(../img/info.svg);
+  background-position: 50% 50%;
+  background-repeat: no-repeat;
+  background-size: 22px 22px;
+}
+
 .bottom-left {
   bottom: 0;
   left: 0;
@@ -141,9 +149,7 @@ input:valid+span:after {
 
 .layers-toggle {
   right: 10px;
-  /* top: 270px; */
-  /* top: 230px; */
-  top: 160px;
+  top: 200px;
 }
 
 .lat {

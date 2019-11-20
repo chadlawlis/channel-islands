@@ -139,6 +139,37 @@ import { Spinner } from './spin.js';
     // Add zoom and rotation controls
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }));
 
+    // Create custom "about" control and implement as ES6 class
+    // https://docs.mapbox.com/mapbox-gl-js/api/#icontrol
+    class AboutControl {
+      onAdd (map) {
+        this._map = map;
+        this._container = document.createElement('div');
+        this._container.id = 'about-control';
+        this._container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group about-control';
+        this._container.appendChild(document.createElement('button'));
+        return this._container;
+      }
+
+      onRemove () {
+        this._container.parentNode.removeChild(this._container);
+        this._map = undefined;
+      }
+    }
+
+    // Add custom "about" control to map
+    var aboutControl = new AboutControl();
+    map.addControl(aboutControl);
+
+    // Customize "about" control to display custom icon and link to #about
+    var aboutControlControl = document.getElementById('about-control');
+    var aboutButton = aboutControlControl.firstElementChild;
+    aboutButton.id = 'about-button';
+    aboutButton.title = 'About';
+    aboutButton.addEventListener('click', () => {
+      window.location.href = '#about';
+    });
+
     // Add geolocate control
     // https://docs.mapbox.com/mapbox-gl-js/api/#geolocatecontrol
     map.addControl(new mapboxgl.GeolocateControl({
@@ -211,6 +242,36 @@ import { Spinner } from './spin.js';
 
     form = document.getElementById('draw-form');
     form.className = 'bottom-left draw-form form-menu map-overlay';
+
+    // Create lightbox for "about" modal
+    // https://developer.mozilla.org/en-US/docs/Web/CSS/:target
+    var lightbox = document.getElementById('lightbox');
+    var infoLightBox = document.createElement('div');
+    infoLightBox.id = 'about';
+    infoLightBox.className = 'lightbox';
+    var infoLightBoxFigure = document.createElement('figure');
+    var infoLightBoxFigureAnchor = document.createElement('a');
+    infoLightBoxFigureAnchor.href = '#';
+    infoLightBoxFigureAnchor.className = 'close';
+    var infoLightBoxFigureCaption = document.createElement('figcaption');
+    infoLightBoxFigureCaption.innerHTML = '<h1>Channel Islands National Park</h1>' +
+    '<p>This application is designed for visitors to Channel Islands National Park. ' +
+    'Learn more about the park from the <a href="https://www.nps.gov/chis/index.htm" target="_blank">National Park Service</a>.</p>' +
+    '<p>Created by <a href="https://chadlawlis.com" target="_blank">Chad Lawlis</a>.</p>' +
+    '<h1>About</h1>' +
+    '<p>The thematic focus of the app is recreation, specifically camping. The map includes layers for four relevant feature types:</p>' +
+    '<ol><li>Campgrounds</li><li>Drinking Water</li><li>Restrooms</li><li>Viewpoints</li></ol>' +
+    '<p>Beyond serving as a guide for camping and recreation related features, the app is also a data collection and content management system for volunteered geographic information. ' +
+    'Users may add points to the map using the "draw" tool in the top-left corner, which are then visible to others after submitting.</p>' +
+    '<p>There are a number of automated features to the data pipeline, including a spatial join to identify the island on which the point is located ' +
+    'and time triggers to capture the date and time at which each point is created and updated.</p>' +
+    '<h1>Data</h1>' +
+    '<p>Data is sourced from the National Park Service and <a href="https://www.openstreetmap.org/" target="_blank">OpenStreetMap</a>.</p>';
+
+    infoLightBoxFigure.appendChild(infoLightBoxFigureAnchor);
+    infoLightBoxFigure.appendChild(infoLightBoxFigureCaption);
+    infoLightBox.appendChild(infoLightBoxFigure);
+    lightbox.appendChild(infoLightBox);
 
     getData();
   });
