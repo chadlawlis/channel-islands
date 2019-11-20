@@ -257,7 +257,7 @@ input:valid+span:after {
 }
 
 .mapboxgl-popup-content {
-  background: #333;
+  background: #955e3e;
   color: #efefef;
   font: 12px -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, Helvetica, sans-serif;
   min-width: 130px;
@@ -269,8 +269,8 @@ input:valid+span:after {
   margin: 5px 0 0;
 }
 
-.mapboxgl-popup-content .subtitle {
-  margin-top: 2px;
+.mapboxgl-popup-content hr {
+  margin: 0;
 }
 
 .mapboxgl-popup-content .popup-menu p:first-child {
@@ -281,28 +281,24 @@ input:valid+span:after {
   padding: 10px;
 }
 
-.mapboxgl-popup-content hr {
-  margin: 0;
-}
-
 .mapboxgl-popup-anchor-top .mapboxgl-popup-tip,
 .mapboxgl-popup-anchor-top-left .mapboxgl-popup-tip,
 .mapboxgl-popup-anchor-top-right .mapboxgl-popup-tip {
-  border-bottom-color: #333;
+  border-bottom-color: #955e3e;
 }
 
 .mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip,
 .mapboxgl-popup-anchor-bottom-left .mapboxgl-popup-tip,
 .mapboxgl-popup-anchor-bottom-right .mapboxgl-popup-tip {
-  border-top-color: #333;
+  border-top-color: #955e3e;
 }
 
 .mapboxgl-popup-anchor-left .mapboxgl-popup-tip {
-  border-right-color: #333;
+  border-right-color: #955e3e;
 }
 
 .mapboxgl-popup-anchor-right .mapboxgl-popup-tip {
-  border-left-color: #333;
+  border-left-color: #955e3e;
 }
 
 .map-overlay {
@@ -325,6 +321,14 @@ input:valid+span:after {
 .toggle label {
   margin-left: 5px;
   vertical-align: middle;
+}
+
+.small {
+  font-size: 10px;
+}
+
+.subtitle {
+  margin-top: 2px;
 }
 
 .status label {

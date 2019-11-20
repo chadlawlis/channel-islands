@@ -999,122 +999,82 @@ import { Spinner } from './spin.js';
       }
 
       // Add popup for each layer
-      // Change cursor to pointer on parcel layer mouseover
+      // Duplicate across click (for mobile) and mouseover
       map.on('click', l.id, e => {
+        map.getCanvas().style.cursor = 'pointer';
+
+        var popupContent;
         var props = e.features[0].properties;
-        console.log(props);
+
+        popupContent = '<div class="popup-menu"><p><b>' + props.name + '</b></p>';
+
+        if (props.verified) {
+          popupContent += '<p>NPS Verified&nbsp;&#10004;</p>';
+        } else {
+          popupContent += '<p>NPS Verified&nbsp;&#10006;</p>';
+        }
+
+        popupContent += '<p><b>' + props.status + '</b></p></div>';
+
+        // '<p style="small subtitle">Type: ' + props.type + '</p></div>' +
+        popupContent += '<hr><div class="popup-menu">';
+
+        // Mapbox stringifies null feature properties
+        if (props.note !== 'null') {
+          popupContent += '<p>Note:</p>' +
+          '<p><b>' + props.note + '</b></p>';
+        }
+
+        popupContent += '<p>Created:<p>' +
+        '<p><b>' + props.created_at + '</b></p>' +
+        '<p>Updated:<p>' +
+        '<p><b>' + props.updated_at + '</b></p></div>';
+
+        popup.setLngLat(e.lngLat)
+          .setHTML(popupContent)
+          .addTo(map);
       });
 
-      // map.on('mousemove', l.id, e => {
-      //   map.getCanvas().style.cursor = 'pointer';
-      //
-      //   var popupContent;
-      //   var props = e.features[0].properties;
-      //
-      //   popupContent = '<div><div class="popup-menu"><p><b>' + props.name + '</b></p>' +
-      //   '<p style="margin-top: 2px">' + props.state_name + '</p></div>' +
-      //   '<hr>' +
-      //   '<div class="popup-menu"><p><b>Hard Freeze Date</b></p>' +
-      //   '<p class="small" style="margin-top: 2px">' + fLayer.substring(0, 1) + ' of past 10 years</p><p>';
-      //
-      //   if (props[fDate] !== 'null') {
-      //     popupContent += props[fDate] + '</p>';
-      //   } else {
-      //     popupContent += 'N/A</p>';
-      //   }
-      //
-      //   popupContent += '<p><b>Latest Silking Date</b></p><p>';
-      //
-      //   if (props[sDate] !== 'null') {
-      //     popupContent += props[sDate] + '</p></div></div>';
-      //   } else {
-      //     popupContent += 'N/A</p></div></div>';
-      //   }
-      //
-      //   popup.setLngLat(e.lngLat)
-      //     .setHTML(popupContent)
-      //     .addTo(map);
-      // });
-      //
-      // // Change cursor back to default ("grab") on parcel layer mouseleave
-      // map.on('mouseleave', l.id, () => {
-      //   map.getCanvas().style.cursor = '';
-      //   popup.remove();
-      // });
-    });
+      map.on('mousemove', l.id, e => {
+        map.getCanvas().style.cursor = 'pointer';
 
-    // data.features.forEach(f => {
-    //   let props = f.properties;
-    //
-    //   if (!map.getSource('data')) {
-    //     map.addSource('data', {
-    //       type: 'geojson',
-    //       data: data
-    //     });
-    //   }
-    //
-    //   if (!map.getLayer(props.type)) {
-    //     map.addLayer({
-    //       id: props.type,
-    //       type: 'symbol',
-    //       source: 'data',
-    //       layout: {
-    //         'icon-image': props.icon,
-    //         'icon-allow-overlap': true,
-    //         'text-field': '{name}',
-    //         // 'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
-    //         'text-size': 12,
-    //         // 'text-transform': 'uppercase',
-    //         'text-letter-spacing': 0.05
-    //         // 'text-offset': [0, 1.5]
-    //       },
-    //       paint: {
-    //         'text-color': '#333',
-    //         'text-halo-color': '#fff',
-    //         'text-halo-width': 2
-    //       },
-    //       'filter': ['==', 'type', props.type]
-    //     }); // }, firstLabelLayer);
-    //   }
-    //
-    //   // // Add popup for each layer
-    //   // // Change cursor to pointer on parcel layer mouseover
-    //   // map.on('mousemove', 'counties', e => {
-    //   //   map.getCanvas().style.cursor = 'pointer';
-    //   //
-    //   //   var popupContent;
-    //   //   var props = e.features[0].properties;
-    //   //
-    //   //   popupContent = '<div><div class="popup-menu"><p><b>' + props.name + '</b></p>' +
-    //   //   '<p style="margin-top: 2px">' + props.state_name + '</p></div>' +
-    //   //   '<hr>' +
-    //   //   '<div class="popup-menu"><p><b>Hard Freeze Date</b></p>' +
-    //   //   '<p class="small" style="margin-top: 2px">' + fLayer.substring(0, 1) + ' of past 10 years</p><p>';
-    //   //
-    //   //   if (props[fDate] !== 'null') {
-    //   //     popupContent += props[fDate] + '</p>';
-    //   //   } else {
-    //   //     popupContent += 'N/A</p>';
-    //   //   }
-    //   //
-    //   //   popupContent += '<p><b>Latest Silking Date</b></p><p>';
-    //   //
-    //   //   if (props[sDate] !== 'null') {
-    //   //     popupContent += props[sDate] + '</p></div></div>';
-    //   //   } else {
-    //   //     popupContent += 'N/A</p></div></div>';
-    //   //   }
-    //   //
-    //   //   popup.setLngLat(e.lngLat)
-    //   //     .setHTML(popupContent)
-    //   //     .addTo(map);
-    //   // });
-    //   //
-    //   // // Change cursor back to default ("grab") on parcel layer mouseleave
-    //   // map.on('mouseleave', 'counties', () => {
-    //   //   map.getCanvas().style.cursor = '';
-    //   //   popup.remove();
-    //   // });
-    // });
+        var popupContent;
+        var props = e.features[0].properties;
+
+        popupContent = '<div class="popup-menu"><p><b>' + props.name + '</b></p>';
+
+        if (props.verified) {
+          popupContent += '<p>NPS Verified&nbsp;&#10004;</p>';
+        } else {
+          popupContent += '<p>NPS Verified&nbsp;&#10006;</p>';
+        }
+
+        popupContent += '<p><b>' + props.status + '</b></p></div>';
+
+        // '<p style="small subtitle">Type: ' + props.type + '</p></div>' +
+        popupContent += '<hr><div class="popup-menu">';
+
+        // Mapbox stringifies null feature properties
+        if (props.note !== 'null') {
+          popupContent += '<p>Note:</p>' +
+          '<p><b>' + props.note + '</b></p>';
+        }
+
+        popupContent += '<p>Created:<p>' +
+        '<p><b>' + props.created_at + '</b></p>' +
+        '<p>Updated:<p>' +
+        '<p><b>' + props.updated_at + '</b></p></div>';
+
+        popup.setLngLat(e.lngLat)
+          .setHTML(popupContent)
+          .addTo(map);
+      });
+
+      // Change cursor back to default ("grab") on parcel layer mouseleave
+      map.on('mouseleave', l.id, () => {
+        map.getCanvas().style.cursor = '';
+        popup.remove();
+      });
+    });
   }
 })();
