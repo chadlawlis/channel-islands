@@ -2,7 +2,7 @@
 
 import { Spinner } from './spin.js';
 
-(function () {
+(() => {
   var opts = {
     lines: 13, // The number of lines to draw
     length: 38, // The length of each line
@@ -40,6 +40,7 @@ import { Spinner } from './spin.js';
     latInput,
     lonInput,
     typeSelect,
+    typeIconSpan,
     nameLabel,
     nameInput,
     statusLabel,
@@ -49,16 +50,15 @@ import { Spinner } from './spin.js';
     noteTextArea,
     verifiedLabel,
     verifiedInput,
-    feature, // for MapboxDraw
+    feature, // latest drawn feature
     mapLayers,
     data,
     submitButton,
     resetButton;
 
-  var types = [];
-  var poiLayers = [];
-
-  var features = []; //  for MapboxDraw
+  var types = []; // array of poi type strings for map layers
+  var poiLayers = []; // array of objects for map layer id and visibility
+  var features = []; // array of all drawn features
 
   // var newDrawFeature = false;
 
@@ -125,7 +125,7 @@ import { Spinner } from './spin.js';
   });
 
   // Trigger mapData() on map style load (ensures data persists when map style changed)
-  map.on('style.load', function () {
+  map.on('style.load', () => {
     mapLayers = map.getStyle().layers;
     // console.log('mapLayers on style.load:', mapLayers);
 
@@ -134,7 +134,7 @@ import { Spinner } from './spin.js';
     }
   });
 
-  map.on('load', function () {
+  map.on('load', () => {
     // Set minZoom as floor of (rounded down to nearest integer from) fitBounds zoom
     var minZoom = map.getZoom();
     map.setMinZoom(Math.floor(minZoom));
@@ -182,7 +182,7 @@ import { Spinner } from './spin.js';
     var zoomButton = zoomControl.firstElementChild;
     zoomButton.id = 'zoom-to-button';
     zoomButton.title = 'Zoom to park extent';
-    zoomButton.addEventListener('click', function () {
+    zoomButton.addEventListener('click', () => {
       map.fitBounds(zoomToBounds, zoomToOptions);
     });
 
@@ -218,36 +218,37 @@ import { Spinner } from './spin.js';
     getData();
   });
 
-  map.on('draw.create', function (e) {
+  map.on('draw.create', e => {
     // console.log('mapbox-gl-draw-hot:', map.getSource('mapbox-gl-draw-hot'));
     // console.log('mapbox-gl-draw-cold:', map.getSource('mapbox-gl-draw-cold'));
-    // console.log(map.getSource('syms')._data);
+    // console.log(map.getSource('mapbox-gl-draw-cold')._data);
+
+    // newDrawFeature = true;
 
     form.style.display = 'block';
 
     console.log('draw.create:', e);
 
-    // newDrawFeature = true;
-
+    // Feature drawn
     feature = e.features[0];
-    console.log('feature on draw.create:', feature);
+    console.log('feature drawn on draw.create:', feature);
 
-    features = draw.getAll();
-    console.log('features on draw.create:', features);
+    // All drawn features
+    // features = draw.getAll();
+    // console.log('all drawn features on draw.create:', features);
 
     // idInput.value = feature.id;
     lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
     latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
 
-    typeSelect.focus();
-
-    // draw.setFeatureProperty(feature.id, 'type', 'restroom');
+    resetForm();
   });
 
-  map.on('draw.update', function (e) {
+  map.on('draw.update', e => {
     console.log('draw.update', e);
 
-    feature = e.features[0];
+    // feature = e.features[0];
+    feature = draw.getSelected().features[0];
 
     if (e.action === 'move') {
       lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
@@ -255,17 +256,19 @@ import { Spinner } from './spin.js';
     }
   });
 
-  map.on('draw.delete', function (e) {
+  map.on('draw.delete', e => {
     console.log('draw.delete', e);
 
     form.style.display = 'none';
     // idInput.value = '';
     lonInput.value = '';
     latInput.value = '';
+    resetForm();
   });
 
-  map.on('draw.selectionchange', function (e) {
+  map.on('draw.selectionchange', e => {
     console.log('draw.selectionchange:', e);
+    console.log('draw.getSelected()', draw.getSelected());
 
     // If selection changed to another point
     if (e.features.length > 0) {
@@ -273,21 +276,58 @@ import { Spinner } from './spin.js';
         form.style.display = 'block';
       }
 
-      feature = e.features[0];
+      // feature = e.features[0];
+      feature = draw.getSelected().features[0];
+      var props = feature.properties;
 
+      // Populate form
       // idInput.value = feature.id;
       lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
       latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
+
+      if (props.type) {
+        resetButton.disabled = false;
+
+        typeSelect.value = props.type;
+        setTypeIconSpan();
+
+        if (nameInput.disabled) {
+          nameLabel.className = statusLabel.className = noteLabel.className = 'form-label';
+          nameInput.disabled = statusInputOpen.disabled = statusInputClosed.disabled = noteTextArea.disabled = verifiedInput.disabled = false;
+        }
+
+        if (props.name) {
+          nameInput.value = props.name;
+        } else {
+          nameInput.value = '';
+        }
+
+        if (props.status === 'Open') {
+          statusInputOpen.checked = true;
+        } else {
+          statusInputClosed.checked = true;
+        }
+
+        if (props.note) {
+          noteTextArea.value = props.note;
+        } else {
+          noteTextArea.value = '';
+        }
+
+        verifiedInput.checked = props.verified;
+      } else {
+        resetForm();
+      }
     } else {
       // Otherwise, if no point selected (clicked away from point)
       form.style.display = 'none';
-      // idInput.value = '';
-      lonInput.value = '';
-      latInput.value = '';
+      // // idInput.value = '';
+      // lonInput.value = '';
+      // latInput.value = '';
     }
   });
 
-  // map.on('click', function (e) {
+  // map.on('click', e => {
   //   console.log('click:', e);
   //
   //   if (draw.getFeatureIdsAt(e.point).length > 0) {
@@ -308,6 +348,37 @@ import { Spinner } from './spin.js';
   //
   //   newDrawFeature = false;
   // });
+
+  function setTypeIconSpan () {
+    var val = typeSelect.value;
+
+    if (val === 'campground') {
+      typeIconSpan.style.backgroundImage = 'url(assets/img/maki/campsite-15.svg)';
+    } else if (val === 'drinking-water') {
+      typeIconSpan.style.backgroundImage = 'url(assets/img/maki/drinking-water-15.svg)';
+    } else if (val === 'restroom') {
+      typeIconSpan.style.backgroundImage = 'url(assets/img/maki/toilet-15.svg)';
+    } else if (val === 'viewpoint') {
+      typeIconSpan.style.backgroundImage = 'url(assets/img/maki/viewpoint-15.svg)';
+    } else {
+      typeIconSpan.style.backgroundImage = '';
+    }
+  }
+
+  function resetForm () {
+    typeSelect.value = '';
+    nameInput.value = '';
+    statusInputOpen.checked = true;
+    noteTextArea.value = '';
+    verifiedInput.checked = false;
+
+    nameLabel.className = statusLabel.className = noteLabel.className = 'form-label-disabled';
+    nameInput.disabled = statusInputOpen.disabled = statusInputClosed.disabled = noteTextArea.disabled = verifiedInput.disabled = true;
+    typeIconSpan.style.backgroundImage = '';
+
+    resetButton.disabled = true;
+    typeSelect.focus();
+  }
 
   function getData () {
     fetch('https://' + user + '.carto.com/api/v2/sql?format=GeoJSON&q=' + getSQL)
@@ -334,14 +405,14 @@ import { Spinner } from './spin.js';
       });
 
     // $.ajax('https://' + user + '.carto.com/api/v2/sql?format=GeoJSON&q=' + getSQL, {
-    //   beforeSend: function () {
+    //   beforeSend: () => {
     //     spinner.spin(target);
     //   },
-    //   complete: function () {
+    //   complete: () => {
     //     spinner.stop();
     //   },
     //   dataType: 'json',
-    //   success: function (response) {
+    //   success: response => {
     //     data = response;
     //
     //     console.log('data on getData():', data);
@@ -353,17 +424,17 @@ import { Spinner } from './spin.js';
     //
     //     mapData();
     //   },
-    //   error: function () {
+    //   error: () => {
     //     spinner.stop();
     //   },
     //   statusCode: {
-    //     400: function () {
+    //     400: () => {
     //       window.alert('Error (400): Bad request.');
     //     },
-    //     404: function () {
+    //     404: () => {
     //       window.alert('Error (404): The requested resource could not be found.');
     //     },
-    //     500: function () {
+    //     500: () => {
     //       window.alert('Error (500): Internal server error.');
     //     }
     //   }
@@ -377,7 +448,7 @@ import { Spinner } from './spin.js';
   }
 
   function addOverlayLayersMenu () {
-    data.features.forEach(function (f) {
+    data.features.forEach(f => {
       var props = f.properties;
 
       // If feature type hasn't been added to types array yet, add it to layer switcher
@@ -394,7 +465,7 @@ import { Spinner } from './spin.js';
       }
     });
 
-    poiLayers.forEach(function (l) {
+    poiLayers.forEach(l => {
       var layerDiv = document.createElement('div');
       layerDiv.className = 'toggle';
       var layerInput = document.createElement('input');
@@ -414,7 +485,7 @@ import { Spinner } from './spin.js';
       layerDiv.appendChild(layerLabel);
       overlayLayersMenu.appendChild(layerDiv);
 
-      layerInput.addEventListener('change', function (e) {
+      layerInput.addEventListener('change', e => {
         map.setLayoutProperty(l.id, 'visibility', e.target.checked ? 'visible' : 'none');
         l.visibility = map.getLayoutProperty(l.id, 'visibility');
       });
@@ -431,7 +502,7 @@ import { Spinner } from './spin.js';
     // Otherwise they render in reverse, with layers added last rendered first:
     //   viewpoint, restroom, drinking-water, campground
     // (moved here, out from mapData(), given only needed once)
-    poiLayers.sort(function (a, b) {
+    poiLayers.sort((a, b) => {
       // https://stackoverflow.com/a/35092754
       return b.id.localeCompare(a.id);
     });
@@ -442,7 +513,7 @@ import { Spinner } from './spin.js';
   }
 
   function addBaseLayersMenu () {
-    baseLayers.forEach(function (l) { // Instantiate layersMenu with an input for each baseLayer declared at top of script
+    baseLayers.forEach(l => { // Instantiate layersMenu with an input for each baseLayer declared at top of script
       var layerDiv = document.createElement('div'); // Store each input in a div for vertical list display
       layerDiv.id = l.label.toLowerCase() + '-input';
       layerDiv.className = 'toggle';
@@ -483,23 +554,18 @@ import { Spinner } from './spin.js';
       baseLayerInputs[i].onclick = switchBaseLayer;
     }
 
-    layersToggle.addEventListener('mouseover', function (e) {
+    layersToggle.addEventListener('mouseover', e => {
       layersMenu.style.display = 'block'; // Display layer switcher menu on hover ..
       layersImage.style.display = 'none'; // ... replacing layers icon
     });
 
-    layersToggle.addEventListener('mouseout', function (e) {
+    layersToggle.addEventListener('mouseout', e => {
       layersImage.style.display = 'block'; // Return to default display of layers icon on mouseout ...
       layersMenu.style.display = 'none'; // ... hiding layer switcher menu
     });
   }
 
   function buildForm () {
-    // var formTitle = document.createElement('div');
-    // formTitle.className = 'form-menu title';
-    // formTitle.innerHTML = '<h1>Add a point</h1>';
-    // form.appendChild(formTitle);
-
     // // Id text input
     // var idInputDiv = document.createElement('div');
     // idInputDiv.className = 'form-input id';
@@ -554,7 +620,7 @@ import { Spinner } from './spin.js';
 
     form.appendChild(lonInputDiv);
 
-    // Type select element
+    // Type select
     var typeSelectDiv = document.createElement('div');
     // Clear both floating elements that precede it (lat + lon)
     // https://developer.mozilla.org/en-US/docs/Web/CSS/clear
@@ -588,48 +654,41 @@ import { Spinner } from './spin.js';
       typeSelect.appendChild(option);
     });
 
-    var typeIconSpan = document.createElement('span');
+    typeIconSpan = document.createElement('span');
     typeIconSpan.id = 'type-icon-span';
     typeIconSpan.className = 'type-icon-span v-middle';
 
     typeSelect.addEventListener('change', e => {
       var val = e.target.value;
 
-      if (e.target.validity.valid) {
-        nameLabel.className = 'form-label';
-        statusLabel.className = 'form-label';
-        noteLabel.className = 'form-label';
+      if (val !== '') {
+        draw.setFeatureProperty(feature.id, 'type', val);
+        console.log('feature on typeSelect change:', feature);
 
-        nameInput.disabled = false;
-        statusInputOpen.disabled = false;
-        statusInputClosed.disabled = false;
-        noteTextArea.disabled = false;
-        verifiedInput.disabled = false;
+        nameLabel.className = statusLabel.className = noteLabel.className = 'form-label';
+        nameInput.disabled = statusInputOpen.disabled = statusInputClosed.disabled = noteTextArea.disabled = verifiedInput.disabled = false;
 
         nameInput.focus();
-      } else {
-        nameLabel.className = 'form-label-disabled';
-        statusLabel.className = 'form-label-disabled';
-        noteLabel.className = 'form-label-disabled';
 
-        nameInput.disabled = true;
-        statusInputOpen.disabled = true;
-        statusInputClosed.disabled = true;
-        noteTextArea.disabled = true;
-        verifiedInput.disabled = true;
+        // Set feature status
+        // 'Open' set by default, so can't handle this exclusively on status input change/input event listeners
+        if (statusInputOpen.checked) {
+          draw.setFeatureProperty(feature.id, 'status', statusInputOpen.value);
+        } else {
+          draw.setFeatureProperty(feature.id, 'status', statusInputClosed.value);
+        }
+
+        // Set feature verified
+        // false set by default, so can't handle this exclusively on verified input change/input event listeners
+        draw.setFeatureProperty(feature.id, 'verified', verifiedInput.checked);
+
+        resetButton.disabled = false;
+      } else {
+        nameLabel.className = statusLabel.className = noteLabel.className = 'form-label-disabled';
+        nameInput.disabled = statusInputOpen.disabled = statusInputClosed.disabled = noteTextArea.disabled = verifiedInput.disabled = true;
       }
 
-      if (val === 'campground') {
-        typeIconSpan.style.backgroundImage = 'url(assets/img/maki/campsite-15.svg)';
-      } else if (val === 'drinking-water') {
-        typeIconSpan.style.backgroundImage = 'url(assets/img/maki/drinking-water-15.svg)';
-      } else if (val === 'restroom') {
-        typeIconSpan.style.backgroundImage = 'url(assets/img/maki/toilet-15.svg)';
-      } else if (val === 'viewpoint') {
-        typeIconSpan.style.backgroundImage = 'url(assets/img/maki/viewpoint-15.svg)';
-      } else {
-        typeIconSpan.style.backgroundImage = '';
-      }
+      setTypeIconSpan();
     });
 
     typeSelectDiv.appendChild(typeSelect);
@@ -652,15 +711,21 @@ import { Spinner } from './spin.js';
     nameInput.size = 26;
     nameInput.required = true;
     nameInput.disabled = true;
-    nameInputDiv.appendChild(nameInput);
+    nameInput.addEventListener('input', e => {
+      var val = e.target.value;
 
-    nameInput.addEventListener('input', function (e) {
       if (e.target.validity.valid) {
+        // Set feature name on valid input (i.e., name !== '')
+        draw.setFeatureProperty(feature.id, 'name', val);
+
+        console.log('feature on nameInput input:', feature);
+
         submitButton.disabled = false;
       } else {
         submitButton.disabled = true;
       }
     });
+    nameInputDiv.appendChild(nameInput);
 
     var inputValidity = document.createElement('span');
     inputValidity.className = 'validity';
@@ -668,7 +733,7 @@ import { Spinner } from './spin.js';
 
     form.appendChild(nameInputDiv);
 
-    // Status radio input
+    // Status radio input div
     var statusDiv = document.createElement('div');
     statusDiv.className = 'form-input';
     statusLabel = document.createElement('label');
@@ -680,7 +745,7 @@ import { Spinner } from './spin.js';
     var statusInputDiv = document.createElement('div');
     statusInputDiv.className = 'status';
 
-    // Status = Open
+    // Open status radio input
     statusInputOpen = document.createElement('input');
     statusInputOpen.id = 'status-input-open';
     statusInputOpen.type = 'radio';
@@ -688,18 +753,32 @@ import { Spinner } from './spin.js';
     statusInputOpen.value = 'Open';
     statusInputOpen.checked = true;
     statusInputOpen.disabled = true;
+    statusInputOpen.addEventListener('input', e => {
+      var val = e.target.value;
+
+      draw.setFeatureProperty(feature.id, 'status', val);
+      console.log('feature on statusInputOpen input:', feature);
+    });
     var statusInputOpenLabel = document.createElement('label');
     statusInputOpenLabel.textContent = 'Open';
     statusInputDiv.appendChild(statusInputOpen);
     statusInputDiv.appendChild(statusInputOpenLabel);
 
-    // Status = Closed
+    // Closed status radio input
     statusInputClosed = document.createElement('input');
     statusInputClosed.id = 'status-input-closed';
     statusInputClosed.type = 'radio';
     statusInputClosed.name = 'status';
     statusInputClosed.value = 'Closed';
     statusInputClosed.disabled = true;
+
+    statusInputClosed.addEventListener('input', e => {
+      var val = e.target.value;
+
+      draw.setFeatureProperty(feature.id, 'status', val);
+      console.log('feature on statusInputClosed input:', feature);
+    });
+
     var statusInputClosedLabel = document.createElement('label');
     statusInputClosedLabel.textContent = 'Closed';
     statusInputDiv.appendChild(statusInputClosed);
@@ -725,6 +804,14 @@ import { Spinner } from './spin.js';
     noteTextArea.rows = 2;
     noteTextArea.cols = 24;
     noteTextArea.disabled = true;
+    noteTextArea.addEventListener('input', e => {
+      var val = e.target.value;
+
+      if (val) {
+        draw.setFeatureProperty(feature.id, 'note', val);
+        console.log('feature on noteTextArea input:', feature);
+      }
+    });
     noteTextAreaDiv.appendChild(noteTextArea);
 
     form.appendChild(noteTextAreaDiv);
@@ -736,8 +823,13 @@ import { Spinner } from './spin.js';
     verifiedInput.id = 'verified-input';
     verifiedInput.type = 'checkbox';
     verifiedInput.disabled = true;
+    verifiedInput.addEventListener('input', e => {
+      var val = e.target.checked;
+
+      draw.setFeatureProperty(feature.id, 'verified', val);
+      console.log('feature on verifiedInput input:', feature);
+    });
     verifiedLabel = document.createElement('label');
-    // verifiedLabel.className = 'form-label-disabled';
     verifiedLabel.id = 'verified-label';
     verifiedLabel.htmlFor = 'verified';
     verifiedLabel.textContent = 'NPS Verified';
@@ -756,7 +848,7 @@ import { Spinner } from './spin.js';
     submitButton.disabled = true;
     submitButton.textContent = 'Submit';
 
-    submitButton.addEventListener('click', function () {
+    submitButton.addEventListener('click', () => {
       var lat = latInput.value;
       var lon = lonInput.value;
       var type = typeSelect.value;
@@ -792,24 +884,39 @@ import { Spinner } from './spin.js';
       postData().then(getData());
     });
 
-    // resetButton = document.createElement('button');
-    // resetButton.id = 'reset-button';
-    // resetButton.className = 'input-button';
-    // resetButton.type = 'button';
-    // resetButton.disabled = true;
-    // resetButton.textContent = 'Reset';
+    resetButton = document.createElement('button');
+    resetButton.id = 'reset-button';
+    resetButton.className = 'input-button';
+    resetButton.type = 'button';
+    resetButton.disabled = true;
+    resetButton.textContent = 'Reset';
 
-    // resetButton.addEventListener('click', function () {
-    //
-    // });
+    resetButton.addEventListener('click', () => {
+      var props = feature.properties;
+
+      draw.setFeatureProperty(feature.id, 'type', '');
+      draw.setFeatureProperty(feature.id, 'status', '');
+      draw.setFeatureProperty(feature.id, 'verified', '');
+
+      if (props.name) {
+        draw.setFeatureProperty(feature.id, 'name', '');
+      }
+      if (props.note) {
+        draw.setFeatureProperty(feature.id, 'note', '');
+      }
+
+      console.log('feature after delete feature.properties on reset:', feature);
+
+      resetForm();
+    });
 
     formInputButtonsDiv.appendChild(submitButton);
-    // formInputButtonsDiv.appendChild(resetButton);
+    formInputButtonsDiv.appendChild(resetButton);
     form.appendChild(formInputButtonsDiv);
   }
 
   function mapData () {
-    // data.features.forEach(function (f) {
+    // data.features.forEach(f => {
     //   let props = f.properties;
     //
     //   if (map.getLayer(props.type)) {
@@ -817,7 +924,7 @@ import { Spinner } from './spin.js';
     //   }
     // });
 
-    poiLayers.forEach(function (l) {
+    poiLayers.forEach(l => {
       if (map.getLayer(l.id)) {
         map.removeLayer(l.id);
       }
@@ -827,7 +934,7 @@ import { Spinner } from './spin.js';
       map.removeSource('data');
     }
 
-    poiLayers.forEach(function (l) {
+    poiLayers.forEach(l => {
       if (!map.getSource('data')) {
         map.addSource('data', {
           type: 'geojson',
@@ -893,12 +1000,12 @@ import { Spinner } from './spin.js';
 
       // Add popup for each layer
       // Change cursor to pointer on parcel layer mouseover
-      map.on('click', l.id, function (e) {
+      map.on('click', l.id, e => {
         var props = e.features[0].properties;
         console.log(props);
       });
 
-      // map.on('mousemove', l.id, function (e) {
+      // map.on('mousemove', l.id, e => {
       //   map.getCanvas().style.cursor = 'pointer';
       //
       //   var popupContent;
@@ -930,13 +1037,13 @@ import { Spinner } from './spin.js';
       // });
       //
       // // Change cursor back to default ("grab") on parcel layer mouseleave
-      // map.on('mouseleave', l.id, function () {
+      // map.on('mouseleave', l.id, () => {
       //   map.getCanvas().style.cursor = '';
       //   popup.remove();
       // });
     });
 
-    // data.features.forEach(function (f) {
+    // data.features.forEach(f => {
     //   let props = f.properties;
     //
     //   if (!map.getSource('data')) {
@@ -972,7 +1079,7 @@ import { Spinner } from './spin.js';
     //
     //   // // Add popup for each layer
     //   // // Change cursor to pointer on parcel layer mouseover
-    //   // map.on('mousemove', 'counties', function (e) {
+    //   // map.on('mousemove', 'counties', e => {
     //   //   map.getCanvas().style.cursor = 'pointer';
     //   //
     //   //   var popupContent;
@@ -1004,7 +1111,7 @@ import { Spinner } from './spin.js';
     //   // });
     //   //
     //   // // Change cursor back to default ("grab") on parcel layer mouseleave
-    //   // map.on('mouseleave', 'counties', function () {
+    //   // map.on('mouseleave', 'counties', () => {
     //   //   map.getCanvas().style.cursor = '';
     //   //   popup.remove();
     //   // });
