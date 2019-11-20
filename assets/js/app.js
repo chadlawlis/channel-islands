@@ -999,41 +999,10 @@ import { Spinner } from './spin.js';
       }
 
       // Add popup for each layer
-      // Duplicate across click (for mobile) and mouseover
-      map.on('click', l.id, e => {
-        map.getCanvas().style.cursor = 'pointer';
-
-        var popupContent;
-        var props = e.features[0].properties;
-
-        popupContent = '<div class="popup-menu"><p><b>' + props.name + '</b></p>';
-
-        if (props.verified) {
-          popupContent += '<p>NPS Verified&nbsp;&#10004;</p>';
-        } else {
-          popupContent += '<p>NPS Verified&nbsp;&#10006;</p>';
-        }
-
-        popupContent += '<p><b>' + props.status + '</b></p></div>';
-
-        // '<p style="small subtitle">Type: ' + props.type + '</p></div>' +
-        popupContent += '<hr><div class="popup-menu">';
-
-        // Mapbox stringifies null feature properties
-        if (props.note !== 'null') {
-          popupContent += '<p>Note:</p>' +
-          '<p><b>' + props.note + '</b></p>';
-        }
-
-        popupContent += '<p>Created:<p>' +
-        '<p><b>' + props.created_at + '</b></p>' +
-        '<p>Updated:<p>' +
-        '<p><b>' + props.updated_at + '</b></p></div>';
-
-        popup.setLngLat(e.lngLat)
-          .setHTML(popupContent)
-          .addTo(map);
-      });
+      // map.on('click', l.id, e => {
+      //   var props = e.features[0].properties;
+      //   console.log(props);
+      // });
 
       map.on('mousemove', l.id, e => {
         map.getCanvas().style.cursor = 'pointer';
