@@ -356,8 +356,10 @@ import { Spinner } from './spin.js';
 
         if (props.name) {
           nameInput.value = props.name;
+          submitButton.disabled = false;
         } else {
           nameInput.value = '';
+          submitButton.disabled = true;
         }
 
         if (props.status === 'Open') {
@@ -425,6 +427,7 @@ import { Spinner } from './spin.js';
     nameInput.disabled = statusInputOpen.disabled = statusInputClosed.disabled = noteTextArea.disabled = verifiedInput.disabled = true;
     typeIconSpan.style.backgroundImage = '';
 
+    submitButton.disabled = true;
     resetButton.disabled = true;
     typeSelect.focus();
   }
@@ -658,6 +661,7 @@ import { Spinner } from './spin.js';
 
       if (val !== '') {
         draw.setFeatureProperty(feature.id, 'type', val);
+        draw.setFeatureProperty(feature.id, 'name', '');
         console.log('feature on typeSelect change:', feature);
 
         nameLabel.className = statusLabel.className = noteLabel.className = 'form-label';
