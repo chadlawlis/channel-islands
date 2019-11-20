@@ -937,19 +937,25 @@ import { Spinner } from './spin.js';
         var props = e.features[0].properties;
 
         popupContent = '<div class="popup-menu"><p><b>' + props.name + '</b></p>';
-
-        if (props.verified) {
-          popupContent += '<p>NPS Verified&nbsp;&#10004;</p>';
-        } else {
-          popupContent += '<p>NPS Verified&nbsp;&#10006;</p>';
-        }
-
-        popupContent += '<p><b>' + props.status + '</b></p></div>';
-
         // '<p style="small subtitle">Type: ' + props.type + '</p></div>' +
-        popupContent += '<hr><div class="popup-menu">';
 
         // Mapbox stringifies null feature properties
+        if (props.island !== 'null') {
+          popupContent += '<p>' + props.island + '</p></div><hr>';
+        } else {
+          popupContent += '</div><hr>';
+        }
+
+        popupContent += '<div class="popup-menu">';
+
+        if (props.verified) {
+          popupContent += '<p><b>NPS Verified&nbsp;&#10004;</b></p>';
+        } else {
+          popupContent += '<p><b>NPS Verified&nbsp;&#10006;</b></p>';
+        }
+
+        popupContent += '<p><b>' + props.status + '</b></p>';
+
         if (props.note !== 'null') {
           popupContent += '<p>Note:</p>' +
           '<p><b>' + props.note + '</b></p>';
