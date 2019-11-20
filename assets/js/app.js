@@ -215,105 +215,105 @@ import { Spinner } from './spin.js';
     getData();
   });
 
-  // map.on('draw.create', e => {
-  //   // console.log('mapbox-gl-draw-hot:', map.getSource('mapbox-gl-draw-hot'));
-  //   // console.log('mapbox-gl-draw-cold:', map.getSource('mapbox-gl-draw-cold'));
-  //   // console.log(map.getSource('mapbox-gl-draw-cold')._data);
-  //
-  //   form.style.display = 'block';
-  //
-  //   console.log('draw.create:', e);
-  //
-  //   // Feature drawn
-  //   feature = e.features[0];
-  //   console.log('feature drawn on draw.create:', feature);
-  //
-  //   // All drawn features
-  //   // features = draw.getAll();
-  //   // console.log('all drawn features on draw.create:', features);
-  //
-  //   lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
-  //   latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
-  //
-  //   resetForm();
-  // });
-  //
-  // map.on('draw.update', e => {
-  //   console.log('draw.update', e);
-  //
-  //   feature = draw.getSelected().features[0];
-  //
-  //   if (e.action === 'move') {
-  //     lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
-  //     latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
-  //   }
-  // });
-  //
-  // map.on('draw.delete', e => {
-  //   console.log('draw.delete', e);
-  //
-  //   form.style.display = 'none';
-  //   lonInput.value = '';
-  //   latInput.value = '';
-  //   resetForm();
-  // });
-  //
-  // map.on('draw.selectionchange', e => {
-  //   console.log('draw.selectionchange:', e);
-  //   console.log('draw.getSelected()', draw.getSelected());
-  //
-  //   // If selection changed to another point
-  //   if (e.features.length > 0) {
-  //     if (form.style.display === 'none') {
-  //       form.style.display = 'block';
-  //     }
-  //
-  //     // feature = e.features[0];
-  //     feature = draw.getSelected().features[0];
-  //     var props = feature.properties;
-  //
-  //     // Populate form
-  //     lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
-  //     latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
-  //
-  //     if (props.type) {
-  //       resetButton.disabled = false;
-  //
-  //       typeSelect.value = props.type;
-  //       setTypeIconSpan();
-  //
-  //       if (nameInput.disabled) {
-  //         nameLabel.className = statusLabel.className = noteLabel.className = 'form-label';
-  //         nameInput.disabled = statusInputOpen.disabled = statusInputClosed.disabled = noteTextArea.disabled = verifiedInput.disabled = false;
-  //       }
-  //
-  //       if (props.name) {
-  //         nameInput.value = props.name;
-  //       } else {
-  //         nameInput.value = '';
-  //       }
-  //
-  //       if (props.status === 'Open') {
-  //         statusInputOpen.checked = true;
-  //       } else {
-  //         statusInputClosed.checked = true;
-  //       }
-  //
-  //       if (props.note) {
-  //         noteTextArea.value = props.note;
-  //       } else {
-  //         noteTextArea.value = '';
-  //       }
-  //
-  //       verifiedInput.checked = props.verified;
-  //     } else {
-  //       resetForm();
-  //     }
-  //   } else {
-  //     // Otherwise, if no point selected (clicked away from point)
-  //     form.style.display = 'none';
-  //   }
-  // });
+  map.on('draw.create', e => {
+    // console.log('mapbox-gl-draw-hot:', map.getSource('mapbox-gl-draw-hot'));
+    // console.log('mapbox-gl-draw-cold:', map.getSource('mapbox-gl-draw-cold'));
+    // console.log(map.getSource('mapbox-gl-draw-cold')._data);
+
+    form.style.display = 'block';
+
+    console.log('draw.create:', e);
+
+    // Feature drawn
+    feature = e.features[0];
+    console.log('feature drawn on draw.create:', feature);
+
+    // All drawn features
+    // features = draw.getAll();
+    // console.log('all drawn features on draw.create:', features);
+
+    lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
+    latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
+
+    resetForm();
+  });
+
+  map.on('draw.update', e => {
+    console.log('draw.update', e);
+
+    feature = draw.getSelected().features[0];
+
+    if (e.action === 'move') {
+      lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
+      latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
+    }
+  });
+
+  map.on('draw.delete', e => {
+    console.log('draw.delete', e);
+
+    form.style.display = 'none';
+    lonInput.value = '';
+    latInput.value = '';
+    resetForm();
+  });
+
+  map.on('draw.selectionchange', e => {
+    console.log('draw.selectionchange:', e);
+    console.log('draw.getSelected()', draw.getSelected());
+
+    // If selection changed to another point
+    if (e.features.length > 0) {
+      if (form.style.display === 'none') {
+        form.style.display = 'block';
+      }
+
+      // feature = e.features[0];
+      feature = draw.getSelected().features[0];
+      var props = feature.properties;
+
+      // Populate form
+      lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
+      latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
+
+      if (props.type) {
+        resetButton.disabled = false;
+
+        typeSelect.value = props.type;
+        setTypeIconSpan();
+
+        if (nameInput.disabled) {
+          nameLabel.className = statusLabel.className = noteLabel.className = 'form-label';
+          nameInput.disabled = statusInputOpen.disabled = statusInputClosed.disabled = noteTextArea.disabled = verifiedInput.disabled = false;
+        }
+
+        if (props.name) {
+          nameInput.value = props.name;
+        } else {
+          nameInput.value = '';
+        }
+
+        if (props.status === 'Open') {
+          statusInputOpen.checked = true;
+        } else {
+          statusInputClosed.checked = true;
+        }
+
+        if (props.note) {
+          noteTextArea.value = props.note;
+        } else {
+          noteTextArea.value = '';
+        }
+
+        verifiedInput.checked = props.verified;
+      } else {
+        resetForm();
+      }
+    } else {
+      // Otherwise, if no point selected (clicked away from point)
+      form.style.display = 'none';
+    }
+  });
 
   // map.on('click', e => {
   //   console.log('click:', e);
@@ -590,7 +590,7 @@ import { Spinner } from './spin.js';
       var val = e.target.value;
 
       if (val !== '') {
-        // draw.setFeatureProperty(feature.id, 'type', val);
+        draw.setFeatureProperty(feature.id, 'type', val);
         console.log('feature on typeSelect change:', feature);
 
         nameLabel.className = statusLabel.className = noteLabel.className = 'form-label';
@@ -601,14 +601,14 @@ import { Spinner } from './spin.js';
         // Set feature status
         // 'Open' set by default, so can't handle this exclusively on status input change/input event listeners
         if (statusInputOpen.checked) {
-          // draw.setFeatureProperty(feature.id, 'status', statusInputOpen.value);
+          draw.setFeatureProperty(feature.id, 'status', statusInputOpen.value);
         } else {
-          // draw.setFeatureProperty(feature.id, 'status', statusInputClosed.value);
+          draw.setFeatureProperty(feature.id, 'status', statusInputClosed.value);
         }
 
         // Set feature verified
         // false set by default, so can't handle this exclusively on verified input change/input event listeners
-        // draw.setFeatureProperty(feature.id, 'verified', verifiedInput.checked);
+        draw.setFeatureProperty(feature.id, 'verified', verifiedInput.checked);
 
         resetButton.disabled = false;
       } else {
@@ -644,7 +644,7 @@ import { Spinner } from './spin.js';
 
       if (e.target.validity.valid) {
         // Set feature name on valid input (i.e., name !== '')
-        // draw.setFeatureProperty(feature.id, 'name', val);
+        draw.setFeatureProperty(feature.id, 'name', val);
 
         console.log('feature on nameInput input:', feature);
 
@@ -684,7 +684,7 @@ import { Spinner } from './spin.js';
     statusInputOpen.addEventListener('input', e => {
       var val = e.target.value;
 
-      // draw.setFeatureProperty(feature.id, 'status', val);
+      draw.setFeatureProperty(feature.id, 'status', val);
       console.log('feature on statusInputOpen input:', feature);
     });
     var statusInputOpenLabel = document.createElement('label');
@@ -703,7 +703,7 @@ import { Spinner } from './spin.js';
     statusInputClosed.addEventListener('input', e => {
       var val = e.target.value;
 
-      // draw.setFeatureProperty(feature.id, 'status', val);
+      draw.setFeatureProperty(feature.id, 'status', val);
       console.log('feature on statusInputClosed input:', feature);
     });
 
@@ -736,7 +736,7 @@ import { Spinner } from './spin.js';
       var val = e.target.value;
 
       if (val) {
-        // draw.setFeatureProperty(feature.id, 'note', val);
+        draw.setFeatureProperty(feature.id, 'note', val);
         console.log('feature on noteTextArea input:', feature);
       }
     });
@@ -754,7 +754,7 @@ import { Spinner } from './spin.js';
     verifiedInput.addEventListener('input', e => {
       var val = e.target.checked;
 
-      // draw.setFeatureProperty(feature.id, 'verified', val);
+      draw.setFeatureProperty(feature.id, 'verified', val);
       console.log('feature on verifiedInput input:', feature);
     });
     verifiedLabel = document.createElement('label');
@@ -822,15 +822,15 @@ import { Spinner } from './spin.js';
     resetButton.addEventListener('click', () => {
       var props = feature.properties;
 
-      // draw.setFeatureProperty(feature.id, 'type', '');
-      // draw.setFeatureProperty(feature.id, 'status', '');
-      // draw.setFeatureProperty(feature.id, 'verified', '');
+      draw.setFeatureProperty(feature.id, 'type', '');
+      draw.setFeatureProperty(feature.id, 'status', '');
+      draw.setFeatureProperty(feature.id, 'verified', '');
 
       if (props.name) {
-        // draw.setFeatureProperty(feature.id, 'name', '');
+        draw.setFeatureProperty(feature.id, 'name', '');
       }
       if (props.note) {
-        // draw.setFeatureProperty(feature.id, 'note', '');
+        draw.setFeatureProperty(feature.id, 'note', '');
       }
 
       console.log('feature after delete feature.properties on reset:', feature);
