@@ -10,14 +10,6 @@ body {
   padding: 0;
 }
 
-.bbox-control {
-  /* https://fontawesome.com/icons/compress-arrows-alt?style=regular */
-  background-image: url(../img/extent.svg);
-  background-position: 50% 50%;
-  background-repeat: no-repeat;
-  background-size: 20px 20px;
-}
-
 .bottom-left {
   bottom: 0;
   left: 0;
@@ -341,7 +333,8 @@ input:valid+span:after {
 }
 
 .zoom-to-control {
-  background-image: url(../img/usa.svg);
+  /* https://fontawesome.com/icons/island-tropical?style=solid */
+  background-image: url(../img/island.svg);
   background-position: 50% 50%;
   background-repeat: no-repeat;
   background-size: 22px 22px;
