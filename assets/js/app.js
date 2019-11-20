@@ -57,7 +57,7 @@ import { Spinner } from './spin.js';
 
   var types = []; // array of poi type strings for map layers
   var poiLayers = []; // array of objects for map layer id and visibility
-  var features = []; // array of all drawn features
+  // var features = []; // array of all drawn features
 
   var user = 'clawlis';
   // CARTO GET sql: includes created_at and updated_at in EST as strings, including leading zero for single-digit days
@@ -868,7 +868,12 @@ import { Spinner } from './spin.js';
           type: 'symbol',
           source: 'data',
           layout: {
-            'icon-image': ['concat', ['get', 'icon'], '-15'], // '{icon}-15',
+            // Get 15px maki icons (e.g., "campsite-15" -> "campsite-15.svg" served by Mapbox)
+            'icon-image': ['concat', ['get', 'icon'], '-15'],
+            // This also works:
+            // 'icon-image': '{icon}-15',
+            // If "icon" property "viewpoint" then get icon "viewpoint" (which would need to be added to map)
+            // Otherwise get 15px maki icon based on "icon" property value
             // 'icon-image': [
             //   'case',
             //   ['==', ['get', 'icon'], 'viewpoint'],
