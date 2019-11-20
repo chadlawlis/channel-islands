@@ -172,12 +172,18 @@ import { Spinner } from './spin.js';
 
     // Add geolocate control
     // https://docs.mapbox.com/mapbox-gl-js/api/#geolocatecontrol
-    map.addControl(new mapboxgl.GeolocateControl({
+    var geolocatecontrol = new mapboxgl.GeolocateControl({
       positionOptions: {
-        enableHighAccuracy: true
+        enableHighAccuracy: false
       },
-      trackUserLocation: true
-    }));
+      trackUserLocation: false
+    });
+    map.addControl(geolocatecontrol);
+
+    // Alert if user location outside of park bounds
+    geolocatecontrol.on('outofmaxbounds', e => {
+      window.alert('User location outside of park bounds.');
+    });
 
     // Add draw control to the map
     map.addControl(draw, 'top-left');
