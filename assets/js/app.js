@@ -36,7 +36,6 @@ import { Spinner } from './spin.js';
     baseLayersMenu, // Define globally so can be instantiated on data load when creating layer switchers
     overlayLayersMenu, // Define globally so can be instantiated on data load when creating layer switchers
     form,
-    // idInput,
     latInput,
     lonInput,
     typeSelect,
@@ -59,8 +58,6 @@ import { Spinner } from './spin.js';
   var types = []; // array of poi type strings for map layers
   var poiLayers = []; // array of objects for map layer id and visibility
   var features = []; // array of all drawn features
-
-  // var newDrawFeature = false;
 
   var user = 'clawlis';
   // CARTO GET sql: includes created_at and updated_at in EST as strings, including leading zero for single-digit days
@@ -223,8 +220,6 @@ import { Spinner } from './spin.js';
     // console.log('mapbox-gl-draw-cold:', map.getSource('mapbox-gl-draw-cold'));
     // console.log(map.getSource('mapbox-gl-draw-cold')._data);
 
-    // newDrawFeature = true;
-
     form.style.display = 'block';
 
     console.log('draw.create:', e);
@@ -237,7 +232,6 @@ import { Spinner } from './spin.js';
     // features = draw.getAll();
     // console.log('all drawn features on draw.create:', features);
 
-    // idInput.value = feature.id;
     lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
     latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
 
@@ -247,7 +241,6 @@ import { Spinner } from './spin.js';
   map.on('draw.update', e => {
     console.log('draw.update', e);
 
-    // feature = e.features[0];
     feature = draw.getSelected().features[0];
 
     if (e.action === 'move') {
@@ -260,7 +253,6 @@ import { Spinner } from './spin.js';
     console.log('draw.delete', e);
 
     form.style.display = 'none';
-    // idInput.value = '';
     lonInput.value = '';
     latInput.value = '';
     resetForm();
@@ -281,7 +273,6 @@ import { Spinner } from './spin.js';
       var props = feature.properties;
 
       // Populate form
-      // idInput.value = feature.id;
       lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
       latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
 
@@ -321,9 +312,6 @@ import { Spinner } from './spin.js';
     } else {
       // Otherwise, if no point selected (clicked away from point)
       form.style.display = 'none';
-      // // idInput.value = '';
-      // lonInput.value = '';
-      // latInput.value = '';
     }
   });
 
@@ -340,13 +328,7 @@ import { Spinner } from './spin.js';
   //     idInput.value = feature.id;
   //     lonInput.value = parseFloat(feature.geometry.coordinates[0].toFixed(6));
   //     latInput.value = parseFloat(feature.geometry.coordinates[1].toFixed(6));
-  //   } else if (!newDrawFeature) {
-  //     idInput.value = '';
-  //     lonInput.value = '';
-  //     latInput.value = '';
   //   }
-  //
-  //   newDrawFeature = false;
   // });
 
   function setTypeIconSpan () {
@@ -403,42 +385,6 @@ import { Spinner } from './spin.js';
         spinner.stop();
         window.alert('Error:', err);
       });
-
-    // $.ajax('https://' + user + '.carto.com/api/v2/sql?format=GeoJSON&q=' + getSQL, {
-    //   beforeSend: () => {
-    //     spinner.spin(target);
-    //   },
-    //   complete: () => {
-    //     spinner.stop();
-    //   },
-    //   dataType: 'json',
-    //   success: response => {
-    //     data = response;
-    //
-    //     console.log('data on getData():', data);
-    //
-    //     // Populate overlayLayersMenu if it has not been yet (i.e., on page landing)
-    //     if (!overlayLayersMenu.hasChildNodes()) {
-    //       addOverlayLayersMenu();
-    //     }
-    //
-    //     mapData();
-    //   },
-    //   error: () => {
-    //     spinner.stop();
-    //   },
-    //   statusCode: {
-    //     400: () => {
-    //       window.alert('Error (400): Bad request.');
-    //     },
-    //     404: () => {
-    //       window.alert('Error (404): The requested resource could not be found.');
-    //     },
-    //     500: () => {
-    //       window.alert('Error (500): Internal server error.');
-    //     }
-    //   }
-    // });
   }
 
   function postData () {
@@ -566,24 +512,6 @@ import { Spinner } from './spin.js';
   }
 
   function buildForm () {
-    // // Id text input
-    // var idInputDiv = document.createElement('div');
-    // idInputDiv.className = 'form-input id';
-    // var idLabel = document.createElement('label');
-    // idLabel.className = 'form-label';
-    // idLabel.htmlFor = 'id';
-    // idLabel.textContent = 'ID';
-    // idInputDiv.appendChild(idLabel);
-    // idInput = document.createElement('input');
-    // idInput.id = 'id-input';
-    // idInput.type = 'text';
-    // idInput.name = 'id';
-    // idInput.required = true;
-    // idInput.disabled = true;
-    // idInputDiv.appendChild(idInput);
-    //
-    // form.appendChild(idInputDiv);
-
     // Latitude number input
     var latInputDiv = document.createElement('div');
     latInputDiv.className = 'form-input lat';
@@ -916,14 +844,6 @@ import { Spinner } from './spin.js';
   }
 
   function mapData () {
-    // data.features.forEach(f => {
-    //   let props = f.properties;
-    //
-    //   if (map.getLayer(props.type)) {
-    //     map.removeLayer(props.type);
-    //   }
-    // });
-
     poiLayers.forEach(l => {
       if (map.getLayer(l.id)) {
         map.removeLayer(l.id);
@@ -999,6 +919,7 @@ import { Spinner } from './spin.js';
       }
 
       // Add popup for each layer
+
       // map.on('click', l.id, e => {
       //   var props = e.features[0].properties;
       //   console.log(props);
