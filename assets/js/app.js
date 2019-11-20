@@ -110,16 +110,16 @@ import { Spinner } from './spin.js';
     closeOnClick: false
   });
 
-  // // Create draw control, but don't add it to the map yet
-  // // (must be added on map load)
-  // var draw = new MapboxDraw({
-  //   displayControlsDefault: false,
-  //   controls: {
-  //     point: true,
-  //     trash: true
-  //   },
-  //   userProperties: true
-  // });
+  // Create draw control, but don't add it to the map yet
+  // (must be added on map load)
+  var draw = new MapboxDraw({
+    displayControlsDefault: false,
+    controls: {
+      point: true,
+      trash: true
+    },
+    userProperties: true
+  });
 
   // Trigger mapData() on map style load (ensures data persists when map style changed)
   map.on('style.load', () => {
@@ -148,8 +148,8 @@ import { Spinner } from './spin.js';
       trackUserLocation: true
     }));
 
-    // // Add draw control to the map
-    // map.addControl(draw, 'top-left');
+    // Add draw control to the map
+    map.addControl(draw, 'top-left');
 
     // Create custom "zoom to" control and implement as ES6 class
     // https://docs.mapbox.com/mapbox-gl-js/api/#icontrol
