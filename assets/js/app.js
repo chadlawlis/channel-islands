@@ -127,7 +127,7 @@ import { Spinner } from './spin.js';
     // console.log('mapLayers on style.load:', mapLayers);
 
     if (data) {
-      mapData(data);
+      mapData();
     }
   });
 
@@ -453,14 +453,19 @@ import { Spinner } from './spin.js';
         spinner.stop();
       }).catch(err => {
         spinner.stop();
-        window.alert('Error:', err);
+        window.alert('Error with GET:', err);
       });
   }
 
+  // TODO: "Uncaught TypeError: Cannot read property 'then' of undefined at HTMLButtonElement.<anonymous>" on submit
+  // TODO: error currently thrown on each POST request, as currently structured (though INSERT goes through to CARTO)
   function postData () {
     fetch('https://' + user + '.carto.com/api/v2/sql?q=' + postSQL + '&api_key=' + key, {
       method: 'POST'
     });
+    // .catch(err => {
+    //   window.alert('Error with POST:', err);
+    // });
   }
 
   function addOverlayLayersMenu () {
@@ -880,7 +885,11 @@ import { Spinner } from './spin.js';
         '(select ST_SetSRID(ST_MakePoint(' + lon + ', ' + lat + '), 4326)))';
       }
 
+      // TODO: "Uncaught TypeError: Cannot read property 'then' of undefined at HTMLButtonElement.<anonymous>"
       postData().then(getData());
+      // // Should be no need to call getData after this as map automatically reloads on postData()
+      // // which triggers map.on('load') calling getData()
+      // postData();
     });
 
     resetButton = document.createElement('button');
